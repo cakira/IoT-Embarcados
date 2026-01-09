@@ -47,3 +47,27 @@ No broker MQTT o usuário pode controlar a temperatura desejada e o nível de
 
 Quando o botão liga/desliga estiver no modo "liga", o sistema controlará o nível
 e temperatura da água. A lógica ainda será definida.
+
+A lógica de controle se baseia em 9 zonas, conforme tabela abaixo:
+
+                           |                    TEMPERATURA                   |
+                           +--------------------------------------------------+
+                           |  temperatura   |  temperatura   |  temperatura   |
+                           |      <         |   na faixa     |      >         |
+                           |    mínimo      |     ótima      |    máximo      |
+    -------+---------------+----------------+----------------+----------------+
+           | nível da água | quente aberto  | quente fechado | quente fechado |
+           |       >       |   fria fechado |   fria fechado |   fria aberto  |
+           |    máximo     |  dreno aberto  |  dreno aberto  |  dreno aberto  |
+     NÍVEL |---------------+----------------+----------------+----------------+
+           | nível da água | quente aberto  | quente fechado | quente fechado |
+      DE   |   na faixa    |   fria fechado |   fria fechado |   fria aberto  |
+           |     ótima     |  dreno fechado |  dreno fechado |  dreno fechado |
+     ÁGUA  |---------------+----------------+----------------+----------------+
+           | nível da água | quente aberto  | quente aberto  | quente fechado |
+           |       <       |   fria fechado |   fria aberto  |   fria aberto  |
+           |    mínimo     |  dreno fechado |  dreno fechado |  dreno fechado |
+    -------+---------------+----------------+----------------+----------------/
+
+Para evitar que as controles mudem frequentemente demais, implementamos uma
+histerese tanto para a temperatura como para o nível de água.

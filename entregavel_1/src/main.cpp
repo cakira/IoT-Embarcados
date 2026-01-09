@@ -25,6 +25,10 @@ constexpr float THERMISTOR_BETA = 3950;
 constexpr float WATER_MIN_MEASUREMENT_CM = 0.0;
 constexpr float WATER_MAX_MEASUREMENT_CM = 100.0;
 
+// Hysteresis settings
+constexpr float HYSTERESIS_TEMP = 0.5;  // degrees Celsius
+constexpr float HYSTERESIS_LEVEL = 2.0; // cm
+
 const char* WIFI_SSID = "Wokwi-GUEST";
 const char* WIFI_PASSWORD = "";
 
@@ -54,6 +58,14 @@ constexpr const char* VAR_CONF_LEVEL_MIN = "level-min";
 
 constexpr unsigned long UPDATE_DELAY_MS = 2000;
 
+// Logic Constants
+constexpr int STATE_LOW = 0;
+constexpr int STATE_OPTIMAL = 1;
+constexpr int STATE_HIGH = 2;
+
+constexpr int CLOSED = 0;
+constexpr int OPEN = 1;
+
 // Group monitored data into a single structure
 struct SystemState {
     float avg_temp;
@@ -76,6 +88,10 @@ float config_temp_min = 35.0;
 float config_level_max = 40.0; // in cm
 float config_level_min = 50.0; // in cm
 
+// Hysteresis State Tracking
+int current_temp_state = STATE_OPTIMAL;
+int current_level_state = STATE_OPTIMAL;
+
 // Convert analog NTC reading to Celsius
 float readTemperature(int pin) {
     int analog_value = analogRead(pin);
@@ -96,6 +112,47 @@ float readWaterLevel(int pin) {
     return WATER_MIN_MEASUREMENT_CM +
         ((float)analog_value / ADC_RESOLUTION) *
         (WATER_MAX_MEASUREMENT_CM - WATER_MIN_MEASUREMENT_CM);
+}
+
+// Logic to determine Temperature State with Hysteresis
+int getTemperatureState(float current_temp, int previous_state) {
+    if (previous_state == STATE_LOW) {
+        if (current_temp > config_temp_min + HYSTERESIS_TEMP) {
+            return STATE_OPTIMAL;
+        }
+    } else if (previous_state == STATE_HIGH) {
+        if (current_temp < config_temp_max - HYSTERESIS_TEMP) {
+            return STATE_OPTIMAL;
+        }
+    } else { // previous_state == OPTIMAL
+        if (current_temp < config_temp_min) {
+            return STATE_LOW;
+        }
+        if (current_temp > config_temp_max)
+            return STATE_HIGH;
+    }
+    return previous_state;
+}
+
+// Logic to determine Level State with Hysteresis
+int getLevelState(float current_level, int previous_state) {
+    if (previous_state == STATE_LOW) {
+        if (current_level > config_level_min + HYSTERESIS_LEVEL) {
+            return STATE_OPTIMAL;
+        }
+    } else if (previous_state == STATE_HIGH) {
+        if (current_level < config_level_max - HYSTERESIS_LEVEL) {
+            return STATE_OPTIMAL;
+        }
+    } else { // previous_state == OPTIMAL
+        if (current_level <= config_level_min) {
+            return STATE_LOW;
+        }
+        if (current_level >= config_level_max) {
+            return STATE_HIGH;
+        }
+    }
+    return previous_state;
 }
 
 void connectWiFi() {
@@ -217,6 +274,53 @@ void publishToBroker(const SystemState& state) {
     }
 }
 
+// This function contains the algorithm for the actuators
+void evaluateBusinessRules(SystemState& state) {
+    // Safety Rule: If switch is OFF, everything is CLOSED.
+    if (state.system_switch_state == LOW) {
+        state.hot_status = CLOSED;
+        state.cold_status = CLOSED;
+        state.drain_status = CLOSED;
+        return;
+    }
+
+    // Calculate the states taking in account the histheresy
+    current_temp_state =
+        getTemperatureState(state.avg_temp, current_temp_state);
+    current_level_state = getLevelState(state.water_level, current_level_state);
+
+    // Define Decision Matrices
+    const int HOT_MATRIX[3][3] = {
+        {OPEN, OPEN, CLOSED},   // Level LOW
+        {OPEN, CLOSED, CLOSED}, // Level OPTIMAL
+        {OPEN, CLOSED, CLOSED}  // Level HIGH
+    };
+
+    const int COLD_MATRIX[3][3] = {
+        {CLOSED, OPEN, OPEN},   // Level LOW
+        {CLOSED, CLOSED, OPEN}, // Level OPTIMAL
+        {CLOSED, CLOSED, OPEN}  // Level HIGH
+    };
+
+    const int DRAIN_MATRIX[3][3] = {
+        {CLOSED, CLOSED, CLOSED}, // Level LOW
+        {CLOSED, CLOSED, CLOSED}, // Level OPTIMAL
+        {OPEN, OPEN, OPEN}        // Level HIGH
+    };
+
+    // Apply Logic
+    state.hot_status = HOT_MATRIX[current_level_state][current_temp_state];
+    state.cold_status = COLD_MATRIX[current_level_state][current_temp_state];
+    state.drain_status = DRAIN_MATRIX[current_level_state][current_temp_state];
+}
+
+// This function updates the controls based on the algorithm defined elsewhere
+void updateHardware(const SystemState& state) {
+    digitalWrite(HOT_WATER_PIN, state.hot_status);
+    digitalWrite(COLD_WATER_PIN, state.cold_status);
+    digitalWrite(DRAIN_PIN, state.drain_status);
+}
+
 // Setup called automatically at initialization
 void setup() {
     Serial.begin(115200);
@@ -235,8 +339,6 @@ void setup() {
 
 // Main loop, executed automatically and constantly
 void loop() {
-    static int leds_control = LOW;
-
     // Reconnect if connection is lost
     if (!mqtt.connected()) {
         connectMQTT();
@@ -263,22 +365,8 @@ void loop() {
         Serial.printf("Temperature 2 : %.2f.C\r\n", temp2);
         Serial.printf("Water level: %.1fcm\r\n", current_state.water_level);
 
-        // Control Logic - currently, we just test the leds
-        if (current_state.system_switch_state == LOW) {
-            leds_control = LOW;
-        } else {
-            leds_control = (leds_control == LOW ? HIGH : LOW);
-        }
-
-        digitalWrite(HOT_WATER_PIN, leds_control);
-        digitalWrite(COLD_WATER_PIN, leds_control);
-        digitalWrite(DRAIN_PIN, leds_control);
-
-        // Read Actuator States (Feedback)
-        current_state.hot_status = digitalRead(HOT_WATER_PIN);
-        current_state.cold_status = digitalRead(COLD_WATER_PIN);
-        current_state.drain_status = digitalRead(DRAIN_PIN);
-
+        evaluateBusinessRules(current_state);
+        updateHardware(current_state);
         publishToBroker(current_state);
     }
 }
