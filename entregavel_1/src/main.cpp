@@ -18,7 +18,12 @@ constexpr int HOT_WATER_PIN = 18;
 constexpr int COLD_WATER_PIN = 19;
 constexpr int DRAIN_PIN = 5;
 
+constexpr int ADC_RESOLUTION = 4095;
+
 constexpr float THERMISTOR_BETA = 3950;
+
+constexpr float WATER_MIN_MEASUREMENT_CM = 0.0;
+constexpr float WATER_MAX_MEASUREMENT_CM = 100.0;
 
 const char* WIFI_SSID = "Wokwi-GUEST";
 const char* WIFI_PASSWORD = "";
@@ -39,6 +44,28 @@ WiFiClient espClient;
 PubSubClient mqtt(espClient);
 
 unsigned long next_update_time;
+
+// Convert analog NTC reading to Celsius
+float readTemperature(int pin) {
+    int analog_value = analogRead(pin);
+    // Avoid division by zero if reading is 0 or 4095
+    if (analog_value == 0 || analog_value >= ADC_RESOLUTION)
+        return -273.15;
+
+    return 1.0 /
+        (log(1.0 / (ADC_RESOLUTION / (float)analog_value - 1)) /
+                THERMISTOR_BETA +
+            1.0 / 298.15) -
+        273.15;
+}
+
+float readWaterLevel(int pin) {
+    int analog_value = analogRead(pin);
+
+    return WATER_MIN_MEASUREMENT_CM +
+        ((float)analog_value / ADC_RESOLUTION) *
+        (WATER_MAX_MEASUREMENT_CM - WATER_MIN_MEASUREMENT_CM);
+}
 
 void connectWiFi() {
     Serial.print("[WiFi] Connecting to ");
@@ -86,6 +113,7 @@ void connectMQTT() {
     }
 }
 
+// Setup called automatically at initialization
 void setup() {
     Serial.begin(115200);
 
@@ -101,6 +129,7 @@ void setup() {
     next_update_time = millis();
 }
 
+// Main loop, executed automatically and constantly
 void loop() {
     static int leds_control = LOW;
 
@@ -115,26 +144,20 @@ void loop() {
     if (now > next_update_time) {
         next_update_time += UPDATE_DELAY_MS;
 
-        int temperature_reading_1 = analogRead(TEMPERATURE_PIN_1);
-        int temperature_reading_2 = analogRead(TEMPERATURE_PIN_2);
-        float temperature_1 = 1 /
-                (log(1 / (4095. / temperature_reading_1 - 1)) / THERMISTOR_BETA +
-                    1.0 / 298.15) -
-            273.15;
-        float temperature_2 = 1 /
-                (log(1 / (4095. / temperature_reading_2 - 1)) / THERMISTOR_BETA +
-                    1.0 / 298.15) -
-            273.15;
+        // Read Inputs
+        float temp1 = readTemperature(TEMPERATURE_PIN_1);
+        float temp2 = readTemperature(TEMPERATURE_PIN_2);
 
-        int water_level_reading = analogRead(WATER_LEVEL_PIN);
+        float water_level = readWaterLevel(WATER_LEVEL_PIN);
 
-        Serial.printf("Reading 1  : %d - Temp = %.2f\r\n", temperature_reading_1,
-            temperature_1);
-        Serial.printf("Reading 2  : %d - Temp = %.2f\r\n", temperature_reading_2,
-            temperature_2);
-        Serial.printf("Water level: %d\r\n", water_level_reading);
+        int system_switch_state = digitalRead(SYSTEM_SWITCH_PIN);
 
-        if (digitalRead(SYSTEM_SWITCH_PIN) == LOW) {
+        Serial.printf("Temperature 1 : %.2f.C\r\n", temp1);
+        Serial.printf("Temperature 2 : %.2f.C\r\n", temp2);
+        Serial.printf("Water level: %.1fcm\r\n", water_level);
+
+        // Control Logic - currently, we just test the leds
+        if (system_switch_state == LOW) {
             leds_control = LOW;
         } else {
             leds_control = (leds_control == LOW ? HIGH : LOW);
