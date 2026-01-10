@@ -361,9 +361,17 @@ void loop() {
         current_state.water_level = readWaterLevel(WATER_LEVEL_PIN);
         current_state.system_switch_state = digitalRead(SYSTEM_SWITCH_PIN);
 
-        Serial.printf("Temperature 1 : %.2f.C\r\n", temp1);
-        Serial.printf("Temperature 2 : %.2f.C\r\n", temp2);
-        Serial.printf("Water level: %.1fcm\r\n", current_state.water_level);
+        // Print data in the serial port
+        Serial.printf("\r\n");
+        Serial.printf(
+            "Current temperature: %.2f.C (Temp1 = %.2f, Temp2 = %.2f)\r\n",
+            current_state.avg_temp, temp1, temp2);
+        Serial.printf(
+            "Current water level: %.2fcm\r\n", current_state.water_level);
+        Serial.printf("Temperature control: %.1f.C - %.1f.C\r\n",
+            config_temp_min, config_temp_max);
+        Serial.printf("      Water control: %.1fcm - %.1fcm\r\n",
+            config_level_min, config_level_max);
 
         evaluateBusinessRules(current_state);
         updateHardware(current_state);
