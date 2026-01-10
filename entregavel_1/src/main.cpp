@@ -17,6 +17,7 @@ constexpr int WATER_LEVEL_PIN = 35;
 constexpr int HOT_WATER_PIN = 18;
 constexpr int COLD_WATER_PIN = 19;
 constexpr int DRAIN_PIN = 5;
+constexpr int SIMULATOR_PIN = 15;
 
 constexpr int ADC_RESOLUTION = 4095;
 
@@ -68,12 +69,20 @@ constexpr int OPEN = 1;
 
 // Group monitored data into a single structure
 struct SystemState {
-    float avg_temp;
+    float temp1;
+    float temp2;
     float water_level;
     int hot_status;
     int cold_status;
     int drain_status;
     int system_switch_state;
+};
+
+struct SimulationState {
+    int active;
+    float temp1;
+    float temp2;
+    float water_level;
 };
 
 // Global Variables
@@ -92,26 +101,43 @@ float config_level_min = 50.0; // in cm
 int current_temp_state = STATE_OPTIMAL;
 int current_level_state = STATE_OPTIMAL;
 
+SimulationState simulation_state = {0, 25.0, 25.0, 0.0};
+
 // Convert analog NTC reading to Celsius
 float readTemperature(int pin) {
-    int analog_value = analogRead(pin);
-    // Avoid division by zero if reading is 0 or 4095
-    if (analog_value == 0 || analog_value >= ADC_RESOLUTION)
-        return -273.15;
+    if (!simulation_state.active) {
+        int analog_value = analogRead(pin);
+        // Avoid division by zero if reading is 0 or 4095
+        if (analog_value == 0 || analog_value >= ADC_RESOLUTION)
+            return -273.15;
 
-    return 1.0 /
-        (log(1.0 / (ADC_RESOLUTION / (float)analog_value - 1)) /
-                THERMISTOR_BETA +
-            1.0 / 298.15) -
-        273.15;
+        return 1.0 /
+            (log(1.0 / (ADC_RESOLUTION / (float)analog_value - 1)) /
+                    THERMISTOR_BETA +
+                1.0 / 298.15) -
+            273.15;
+    } else {
+        // simulation
+        if (pin == TEMPERATURE_PIN_1) {
+            return simulation_state.temp1;
+        } else {
+            // pin == TEMPERATURE_PIN_2
+            return simulation_state.temp2;
+        }
+    }
 }
 
 float readWaterLevel(int pin) {
-    int analog_value = analogRead(pin);
+    if (!simulation_state.active) {
+        int analog_value = analogRead(pin);
 
-    return WATER_MIN_MEASUREMENT_CM +
-        ((float)analog_value / ADC_RESOLUTION) *
-        (WATER_MAX_MEASUREMENT_CM - WATER_MIN_MEASUREMENT_CM);
+        return WATER_MIN_MEASUREMENT_CM +
+            ((float)analog_value / ADC_RESOLUTION) *
+            (WATER_MAX_MEASUREMENT_CM - WATER_MIN_MEASUREMENT_CM);
+    } else {
+        // simulation
+        return simulation_state.water_level;
+    }
 }
 
 // Logic to determine Temperature State with Hysteresis
@@ -252,13 +278,13 @@ void publishToBroker(const SystemState& state) {
     char payload[MSG_BUFFER_SIZE];
 
     // Format the JSON using the struct members
+    float avg_temp = (state.temp1 + state.temp2) / 2.0;
     int ret = snprintf(payload, MSG_BUFFER_SIZE,
         "{\"%s\": %.2f, \"%s\": %.2f, \"%s\": %d, \"%s\": %d, \"%s\": %d, "
         "\"%s\": %d}",
-        VAR_TEMP_AVG, state.avg_temp, VAR_LEVEL, state.water_level,
-        VAR_HOT_WATER, state.hot_status, VAR_COLD_WATER, state.cold_status,
-        VAR_DRAIN, state.drain_status, VAR_SYSTEM_ACTIVE,
-        state.system_switch_state);
+        VAR_TEMP_AVG, avg_temp, VAR_LEVEL, state.water_level, VAR_HOT_WATER,
+        state.hot_status, VAR_COLD_WATER, state.cold_status, VAR_DRAIN,
+        state.drain_status, VAR_SYSTEM_ACTIVE, state.system_switch_state);
 
     // Validate and Publish
     if (ret >= 0 && ret < MSG_BUFFER_SIZE) {
@@ -285,8 +311,8 @@ void evaluateBusinessRules(SystemState& state) {
     }
 
     // Calculate the states taking in account the histheresy
-    current_temp_state =
-        getTemperatureState(state.avg_temp, current_temp_state);
+    float avg_temp = (state.temp1 + state.temp2) / 2.0;
+    current_temp_state = getTemperatureState(avg_temp, current_temp_state);
     current_level_state = getLevelState(state.water_level, current_level_state);
 
     // Define Decision Matrices
@@ -321,6 +347,90 @@ void updateHardware(const SystemState& state) {
     digitalWrite(DRAIN_PIN, state.drain_status);
 }
 
+// Updates the physics simulation if active, or syncs state if inactive
+void updateSimulation(const SystemState& physical_state) {
+    if (simulation_state.active) {
+        // Simulation Constants
+        constexpr float TEMP_AMBIENT = 25.0;     // Environment temp
+        constexpr float TEMP_HOT_SOURCE = 60.0;  // Hot faucet temp
+        constexpr float TEMP_COLD_SOURCE = 20.0; // Cold faucet temp
+
+        constexpr float FLOW_RATE_IN = 2.0;    // cm height increase per update
+        constexpr float FLOW_RATE_DRAIN = 3.0; // cm height decrease per update
+
+        constexpr float MIXING_FACTOR =
+            0.15; // Speed of temp equalization between sensors
+        constexpr float COOLING_FACTOR =
+            0.02; // Speed of heat loss to environment
+
+        // Calculate mass proxy (Volume per side = Level / 2)
+        // We use a small epsilon to avoid division by zero
+        float current_mass = max(simulation_state.water_level, 0.1f);
+
+        // --- 1. Water Level Update ---
+        float added_level = 0.0;
+
+        if (physical_state.hot_status == OPEN) {
+            added_level += FLOW_RATE_IN;
+        }
+        if (physical_state.cold_status == OPEN) {
+            added_level += FLOW_RATE_IN;
+        }
+
+        // Apply level changes
+        simulation_state.water_level += added_level;
+
+        if (physical_state.drain_status == OPEN) {
+            simulation_state.water_level -= FLOW_RATE_DRAIN;
+        }
+
+        // Clamp level limits
+        if (simulation_state.water_level < 0.0)
+            simulation_state.water_level = 0.0;
+        if (simulation_state.water_level > 100.0)
+            simulation_state.water_level = 100.0;
+
+        // --- 2. Thermal Update (Mass weighted average) ---
+        // New Temp = ((CurrentMass * CurrentTemp) + (AddedMass * SourceTemp)) /
+        // TotalMass
+
+        // Hot side (Sensor 1) receives Hot water directly
+        if (physical_state.hot_status == OPEN) {
+            simulation_state.temp1 = ((current_mass * simulation_state.temp1) +
+                                         (FLOW_RATE_IN * TEMP_HOT_SOURCE)) /
+                (current_mass + FLOW_RATE_IN);
+        }
+
+        // Cold side (Sensor 2) receives Cold water directly
+        if (physical_state.cold_status == OPEN) {
+            simulation_state.temp2 = ((current_mass * simulation_state.temp2) +
+                                         (FLOW_RATE_IN * TEMP_COLD_SOURCE)) /
+                (current_mass + FLOW_RATE_IN);
+        }
+
+        // --- 3. Mixing (Heat exchange between bodies) ---
+        // Temperature flows from high to low
+        float temp_diff = simulation_state.temp1 - simulation_state.temp2;
+        simulation_state.temp1 -= temp_diff * MIXING_FACTOR;
+        simulation_state.temp2 += temp_diff * MIXING_FACTOR;
+
+        // --- 4. Ambient Cooling ---
+        // Both sides lose heat to environment
+        simulation_state.temp1 -=
+            (simulation_state.temp1 - TEMP_AMBIENT) * COOLING_FACTOR;
+        simulation_state.temp2 -=
+            (simulation_state.temp2 - TEMP_AMBIENT) * COOLING_FACTOR;
+
+    } else {
+        // Simulation not active: Sync internal state with physical sensors
+        // This ensures that if we toggle simulation ON, it starts from current
+        // values
+        simulation_state.temp1 = physical_state.temp1;
+        simulation_state.temp2 = physical_state.temp2;
+        simulation_state.water_level = physical_state.water_level;
+    }
+}
+
 // Setup called automatically at initialization
 void setup() {
     Serial.begin(115200);
@@ -353,19 +463,21 @@ void loop() {
 
         SystemState current_state;
 
-        // Read Inputs
-        float temp1 = readTemperature(TEMPERATURE_PIN_1);
-        float temp2 = readTemperature(TEMPERATURE_PIN_2);
-        current_state.avg_temp = (temp1 + temp2) / 2.0;
+        // Read Inputs (Hardware or Simulation)
+        simulation_state.active = digitalRead(SIMULATOR_PIN);
+
+        current_state.temp1 = readTemperature(TEMPERATURE_PIN_1);
+        current_state.temp2 = readTemperature(TEMPERATURE_PIN_2);
 
         current_state.water_level = readWaterLevel(WATER_LEVEL_PIN);
         current_state.system_switch_state = digitalRead(SYSTEM_SWITCH_PIN);
 
         // Print data in the serial port
+        float avg_temp = (current_state.temp1 + current_state.temp2) / 2.0;
         Serial.printf("\r\n");
         Serial.printf(
             "Current temperature: %.2f.C (Temp1 = %.2f, Temp2 = %.2f)\r\n",
-            current_state.avg_temp, temp1, temp2);
+            avg_temp, current_state.temp1, current_state.temp2);
         Serial.printf(
             "Current water level: %.2fcm\r\n", current_state.water_level);
         Serial.printf("Temperature control: %.1f.C - %.1f.C\r\n",
@@ -376,5 +488,6 @@ void loop() {
         evaluateBusinessRules(current_state);
         updateHardware(current_state);
         publishToBroker(current_state);
+        updateSimulation(current_state);
     }
 }

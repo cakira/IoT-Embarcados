@@ -23,8 +23,8 @@
     {
       "type": "wokwi-slide-potentiometer",
       "id": "pot1",
-      "top": 53.2,
-      "left": 148,
+      "top": 72.4,
+      "left": 167.2,
       "rotate": 270,
       "attrs": { "travelLength": "30" }
     },
@@ -119,6 +119,14 @@
       "top": -134.4,
       "left": 172.8,
       "attrs": { "text": "Liga / desliga" }
+    },
+    { "type": "wokwi-slide-switch", "id": "sw2", "top": -62.8, "left": 339.1, "attrs": {} },
+    {
+      "type": "wokwi-text",
+      "id": "text8",
+      "top": -96,
+      "left": 307.2,
+      "attrs": { "text": "Simula água" }
     }
   ],
   "connections": [
@@ -130,8 +138,8 @@
     [ "ntc2:VCC", "ntc1:VCC", "red", [ "v9.6", "h-172.8" ] ],
     [ "ntc2:GND", "esp:GND.2", "black", [ "v19.2", "h57.6", "v48" ] ],
     [ "ntc2:OUT", "esp:33", "green", [ "v28.8", "h-153.5", "v9.6" ] ],
-    [ "pot1:GND", "ntc1:VCC", "red", [ "v-5.2", "h-316.8" ] ],
-    [ "pot1:VCC", "ntc2:GND", "black", [ "v57.6", "h-76.8", "v-259.2", "h-57.6" ] ],
+    [ "pot1:GND", "ntc1:VCC", "red", [ "v-24.4", "h-336" ] ],
+    [ "pot1:VCC", "ntc2:GND", "black", [ "v38.4", "h-96", "v-240", "h-57.6" ] ],
     [ "pot1:SIG", "esp:35", "violet", [ "v76.8", "h-58.4", "v-259.2", "h-201.6", "v86.4" ] ],
     [ "relay1:COIL1", "relay2:COIL1", "black", [ "v30", "h104.3", "v-28.8" ] ],
     [ "esp:5", "relay3:COIL2", "gray", [ "h67.2", "v153.6" ] ],
@@ -153,7 +161,10 @@
     [ "relay3:P1", "esp:3V3", "red", [ "v30", "h104.5", "v-297.6" ] ],
     [ "led3:C", "relay1:COIL1", "black", [ "v0", "h-38", "v-48", "h115.2" ] ],
     [ "led3:A", "r3:1", "green", [ "v0" ] ],
-    [ "r3:2", "relay3:NO1", "green", [ "h57.6", "v-1.2" ] ]
+    [ "r3:2", "relay3:NO1", "green", [ "h57.6", "v-1.2" ] ],
+    [ "sw2:1", "sw1:1", "black", [ "v38.4", "h-134.4", "v-76.8" ] ],
+    [ "sw2:3", "pot1:GND", "red", [ "v28.8", "h-105.4" ] ],
+    [ "esp:15", "sw2:2", "gold", [ "v0", "h76.8", "v-172.8", "h38.4", "v-48", "h115.2" ] ]
   ],
   "dependencies": {}
 }
