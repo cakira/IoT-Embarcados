@@ -476,7 +476,7 @@ void loop() {
         float avg_temp = (current_state.temp1 + current_state.temp2) / 2.0;
         Serial.printf("\r\n");
         Serial.printf(
-            "Current temperature: %.2f.C (Temp1 = %.2f, Temp2 = %.2f)\r\n",
+            "Current temperature: %.2f.C  (Temp1=%.1f, Temp2=%.1f)\r\n",
             avg_temp, current_state.temp1, current_state.temp2);
         Serial.printf(
             "Current water level: %.2fcm\r\n", current_state.water_level);

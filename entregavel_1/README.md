@@ -32,8 +32,10 @@
 * Controle de água fria (digital, do tipo aberto/fechado)
 * Dreno de água (digital, do tipo aberto/fechado) - permite o escoamento de água
 
-#### Atuação via Internet
+#### Acesso via Internet
 * Apresentação da temperatura média da água
+* Apresentação do nível da água
+* Apresentação do estado dos controladores de água quente, fria e do dreno
 * Controle da temperatura máxima e mínima aceitável
 * Controle do nível máximo e mínimo aceitável de água
 
@@ -71,3 +73,7 @@ A lógica de controle se baseia em 9 zonas, conforme tabela abaixo:
 
 Para evitar que as controles mudem frequentemente demais, implementamos uma
 histerese tanto para a temperatura como para o nível de água.
+
+#### Diagrama
+
+![Diagrama do sistema embarcado no Wokwi](doc/diagram.png)
