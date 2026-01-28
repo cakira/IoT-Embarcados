@@ -16,8 +16,8 @@ Este é o repositório onde guardo os arquivos relacionados ao curso de
 IoT-Embarcados ministrado pela **Alura + FIAP**. Sua localização é:
 https://github.com/cakira/IoT-Embarcados/.
 
-O primeiro entregável está na pasta "entregavel_1", que contém seu próprio
-arquivo README.md.
+Os entregáveis 1 e 2 estão nas pastas "entregavel_1" e "entregavel_2",
+respectivamente. Cada uma das pastas contém seu próprio arquivo README.md.
 
 Os códigos foram desenvolvidos para o simulador **[Wokwi](https://wokwi.com/)**.
 
