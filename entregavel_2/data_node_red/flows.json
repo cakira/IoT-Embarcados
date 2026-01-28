@@ -69,51 +69,24 @@
         "sessionExpiry": ""
     },
     {
-        "id": "e47d97060bc4289f",
-        "type": "ui-page",
-        "name": "Page 1",
-        "ui": "56809ed266719da4",
-        "path": "/page1",
-        "icon": "home",
-        "layout": "grid",
-        "theme": "7a3e408d80ce3dbd",
-        "breakpoints": [
-            {
-                "name": "Default",
-                "px": "0",
-                "cols": "3"
-            },
-            {
-                "name": "Tablet",
-                "px": "576",
-                "cols": "6"
-            },
-            {
-                "name": "Small Desktop",
-                "px": "768",
-                "cols": "9"
-            },
-            {
-                "name": "Desktop",
-                "px": "1024",
-                "cols": "12"
-            }
+        "id": "56809ed266719da4",
+        "type": "ui-base",
+        "name": "PoC - Location-Based Temperature Service",
+        "path": "/dashboard",
+        "appIcon": "",
+        "includeClientData": true,
+        "acceptsClientConfig": [
+            "ui-notification",
+            "ui-control"
         ],
-        "order": 1,
-        "className": "",
-        "visible": true,
-        "disabled": false
-    },
-    {
-        "id": "899c2eecfba7122f",
-        "type": "ui-link",
-        "name": "Link 1",
-        "ui": "56809ed266719da4",
-        "path": "/",
-        "icon": "home",
-        "order": 2,
-        "visible": true,
-        "disabled": false
+        "showPathInSidebar": false,
+        "headerContent": "dashboard",
+        "navigationStyle": "none",
+        "titleBarStyle": "default",
+        "showReconnectNotification": true,
+        "notificationDisplayTime": 1,
+        "showDisconnectNotification": true,
+        "allowInstall": false
     },
     {
         "id": "7a3e408d80ce3dbd",
@@ -149,24 +122,40 @@
         "groupType": "default"
     },
     {
-        "id": "56809ed266719da4",
-        "type": "ui-base",
-        "name": "PoC - Location-Based Temperature Service",
-        "path": "/dashboard",
-        "appIcon": "",
-        "includeClientData": true,
-        "acceptsClientConfig": [
-            "ui-notification",
-            "ui-control"
+        "id": "e47d97060bc4289f",
+        "type": "ui-page",
+        "name": "Page 1",
+        "ui": "56809ed266719da4",
+        "path": "",
+        "icon": "home",
+        "layout": "grid",
+        "theme": "7a3e408d80ce3dbd",
+        "breakpoints": [
+            {
+                "name": "Default",
+                "px": "0",
+                "cols": "3"
+            },
+            {
+                "name": "Tablet",
+                "px": "576",
+                "cols": "6"
+            },
+            {
+                "name": "Small Desktop",
+                "px": "768",
+                "cols": "9"
+            },
+            {
+                "name": "Desktop",
+                "px": "1024",
+                "cols": "12"
+            }
         ],
-        "showPathInSidebar": false,
-        "headerContent": "dashboard",
-        "navigationStyle": "none",
-        "titleBarStyle": "default",
-        "showReconnectNotification": true,
-        "notificationDisplayTime": 1,
-        "showDisconnectNotification": true,
-        "allowInstall": false
+        "order": 1,
+        "className": "",
+        "visible": true,
+        "disabled": false
     },
     {
         "id": "3cc11d24.ff01a2",
@@ -261,7 +250,7 @@
         "type": "function",
         "z": "f6f2187d.f17ca8",
         "name": "Store in sensorData",
-        "func": "// The topic comes in as \"sensor/1\", \"sensor/2\", etc.\n// We split the string to get the ID \"1\", \"2\", or \"3\"\nvar sensorID = msg.topic.split(\"/\").at(-1);\n\n// We get the current list of sensors from memory (or create an empty one)\nvar sensors = flow.get('sensorData') || {};\n\n// We save the payload (lat, lon, temp) into this object\nsensors[sensorID] = msg.payload;\n\n// Write it back to memory\nflow.set('sensorData', sensors);\n\n// We don't return anything because this is just storage.\nmsg.payload = true;\nreturn msg;",
+        "func": "// The topic comes in as \".../sensor/1\", \".../sensor/2\", etc.\n// We split the string to get the ID \"1\", \"2\", or \"3\"\nvar sensorID = msg.topic.split(\"/\").at(-1);\n\n// We get the current list of sensors from memory (or create an empty one)\nvar sensors = flow.get('sensorData') || {};\n\n// We save the payload (lat, lon, temp) into this object\nsensors[sensorID] = msg.payload;\n\n// Write it back to memory\nflow.set('sensorData', sensors);\n\n// We don't return anything because this is just storage.\nmsg.payload = true;\nreturn msg;",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
@@ -281,7 +270,7 @@
         "type": "function",
         "z": "f6f2187d.f17ca8",
         "name": "Calc temperature",
-        "func": "var sensors = flow.get('sensorData');\n\nif (!sensors || !sensors[\"0\"] || !sensors[\"1\"] || !sensors[\"2\"]) {\n    msg.payload = { error: \"Data still unavailable. Try again in a few minutes\" };\n    return msg;\n}\n\n// ------------------------------\n// THE GEOMETRY (Plane Equation)\n// ------------------------------\n\n// Get the User's requested location\nvar requestedX = flow.get('requested_latitude');\nvar requestedY = flow.get('requested_longitude');\n\nif (!requestedX || !requestedY) {\n    msg.payload = { error: \"Missing latitude or longitude\" };\n    return msg;\n}\n\n// We define our 3 points (x=lat, y=lon, z=temp)\n// Point 1\nvar x0 = sensors[\"0\"].lat;\nvar y0 = sensors[\"0\"].lon;\nvar z0 = sensors[\"0\"].temp;\n\n// Point 2\nvar x1 = sensors[\"1\"].lat; \nvar y1 = sensors[\"1\"].lon; \nvar z1 = sensors[\"1\"].temp;\n\n// Point 3\nvar x2 = sensors[\"2\"].lat; \nvar y2 = sensors[\"2\"].lon; \nvar z2 = sensors[\"2\"].temp;\n\n// Calculate 2 Vectors (V1 = P2-P1, V2 = P3-P1)\nvar v1x = x1 - x0; var v1y = y1 - y0; var v1z = z1 - z0;\nvar v2x = x2 - x0; var v2y = y2 - y0; var v2z = z2 - z0;\n\n// Calculate Normal Vector (Cross Product: V1 x V2)\n// This gives us the coefficients (a, b, c) for the plane equation: ax + by + cz + d = 0\nvar a = (v1y * v2z) - (v1z * v2y);\nvar b = (v1z * v2x) - (v1x * v2z);\nvar c = (v1x * v2y) - (v1y * v2x);\n\n// Solve for Z (Temperature) at the target (x, y)\n// Formula: z = z0 - ( a*(x - x0) + b*(y - y0) ) / c\n\nvar estimatedTemp = 0;\n\nif (c === 0) {\n     // This happens if points are colinear (straight line) - cannot form a plane\n     node.warn(\"Error: Sensors are in a straight line, cannot calculate plane.\");\n     estimatedTemp = null;\n} else {\n     var dx = requestedX - x0;\n     var dy = requestedY - y0;\n     estimatedTemp = z0 - ( (a * dx) + (b * dy) ) / c;\n}\n\nvar pricePerRequest = 0.01;\nvar cost = flow.get('cost') || 0;\ncost += pricePerRequest;\ncost = Number(cost.toFixed(2)); // avoid precision errors\nflow.set('cost', cost);\n\n\n// --- 4. PREPARE cost RECEIPT ---\nmsg.payload = {\n    \"position\": {\n        \"value\": estimatedTemp,\n        \"context\": {\n            \"lat\": requestedX,\n            \"lng\": requestedY\n        },\n    \"cost\": cost\n    }\n};\n\nreturn msg;",
+        "func": "var sensors = flow.get('sensorData');\n\nif (!sensors || !sensors[\"0\"] || !sensors[\"1\"] || !sensors[\"2\"]) {\n    msg.payload = { error: \"Data still unavailable. Try again in a few minutes\" };\n    return msg;\n}\n\n// ------------------------------\n// THE GEOMETRY (Plane Equation)\n// ------------------------------\n\n// Get the User's requested location\nvar requestedX = flow.get('requested_latitude');\nvar requestedY = flow.get('requested_longitude');\n\nif (!requestedX || !requestedY) {\n    msg.payload = { error: \"Missing latitude or longitude\" };\n    return msg;\n}\n\n// We define our 3 points (x=lat, y=lon, z=temp)\n// Point 1\nvar x0 = sensors[\"0\"].lat;\nvar y0 = sensors[\"0\"].lon;\nvar z0 = sensors[\"0\"].temp;\n\n// Point 2\nvar x1 = sensors[\"1\"].lat; \nvar y1 = sensors[\"1\"].lon; \nvar z1 = sensors[\"1\"].temp;\n\n// Point 3\nvar x2 = sensors[\"2\"].lat; \nvar y2 = sensors[\"2\"].lon; \nvar z2 = sensors[\"2\"].temp;\n\n// Calculate 2 Vectors (V1 = P2-P1, V2 = P3-P1)\nvar v1x = x1 - x0; var v1y = y1 - y0; var v1z = z1 - z0;\nvar v2x = x2 - x0; var v2y = y2 - y0; var v2z = z2 - z0;\n\n// Calculate Normal Vector (Cross Product: V1 x V2)\n// This gives us the coefficients (a, b, c) for the plane equation: ax + by + cz + d = 0\nvar a = (v1y * v2z) - (v1z * v2y);\nvar b = (v1z * v2x) - (v1x * v2z);\nvar c = (v1x * v2y) - (v1y * v2x);\n\n// Solve for Z (Temperature) at the target (x, y)\n// Formula: z = z0 - ( a*(x - x0) + b*(y - y0) ) / c\n\nvar estimatedTemp = 0;\n\nif (c === 0) {\n     // This happens if points are colinear (straight line) - cannot form a plane\n     node.warn(\"Error: Sensors are in a straight line, cannot calculate plane.\");\n     estimatedTemp = null;\n} else {\n     var dx = requestedX - x0;\n     var dy = requestedY - y0;\n     estimatedTemp = z0 - ( (a * dx) + (b * dy) ) / c;\n}\n\nvar pricePerRequest = 0.01;\nvar cost = flow.get('cost') || 0;\ncost += pricePerRequest;\ncost = Number(cost.toFixed(2)); // avoid precision errors\nflow.set('cost', cost);\n\n\n// Create the response message for the MQTT publish\nmsg.payload = {\n    \"position\": {\n        \"value\": estimatedTemp,\n        \"context\": {\n            \"lat\": requestedX,\n            \"lng\": requestedY\n        },\n    }\n};\n\nreturn msg;",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
