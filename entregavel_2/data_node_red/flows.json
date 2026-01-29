@@ -108,20 +108,6 @@
         }
     },
     {
-        "id": "ca943bbe3b35d2a2",
-        "type": "ui-group",
-        "name": "Group 1",
-        "page": "e47d97060bc4289f",
-        "width": 6,
-        "height": 1,
-        "order": 1,
-        "showTitle": false,
-        "className": "",
-        "visible": "true",
-        "disabled": "false",
-        "groupType": "default"
-    },
-    {
         "id": "e47d97060bc4289f",
         "type": "ui-page",
         "name": "Page 1",
@@ -156,6 +142,20 @@
         "className": "",
         "visible": true,
         "disabled": false
+    },
+    {
+        "id": "ca943bbe3b35d2a2",
+        "type": "ui-group",
+        "name": "Group 1",
+        "page": "e47d97060bc4289f",
+        "width": 6,
+        "height": 1,
+        "order": 1,
+        "showTitle": false,
+        "className": "",
+        "visible": "true",
+        "disabled": "false",
+        "groupType": "default"
     },
     {
         "id": "3cc11d24.ff01a2",
@@ -371,7 +371,7 @@
         "type": "debug",
         "z": "f6f2187d.f17ca8",
         "name": "debug 3",
-        "active": false,
+        "active": true,
         "tosidebar": true,
         "console": false,
         "tostatus": false,
@@ -553,7 +553,7 @@
         "type": "debug",
         "z": "f6f2187d.f17ca8",
         "name": "debug 4",
-        "active": false,
+        "active": true,
         "tosidebar": true,
         "console": false,
         "tostatus": false,
