@@ -21,13 +21,14 @@ _Por: Cleber Akira Nakandakare_
       - [Cálculo da temperatura e do custo](#cálculo-da-temperatura-e-do-custo)
       - [Inicialização e _reset_](#inicialização-e-reset)
     - [Mensagens MQTT](#mensagens-mqtt)
-  - [Como executar e testar o sistema](#como-executar-e-testar-o-sistema)
+    - [Documentação](#documentação)
+  - [Procedimentos de teste e resultados obtidos](#procedimentos-de-teste-e-resultados-obtidos)
     - [Obtendo os arquivos de programa](#obtendo-os-arquivos-de-programa)
     - [Carregar o programa Node-RED](#carregar-o-programa-node-red)
     - [Simular o ESP32 na plataforma Wokwi do VS Code](#simular-o-esp32-na-plataforma-wokwi-do-vs-code)
     - [Solicitar uma temperatura no Ubidots](#solicitar-uma-temperatura-no-ubidots)
-  - [Resultados](#resultados)
-    - [Validação dos requisitos](#validação-dos-requisitos)
+    - [_Reset_ dos dados](#reset-dos-dados)
+  - [Validação dos requisitos](#validação-dos-requisitos)
   - [Possíveis melhoria para o projeto](#possíveis-melhoria-para-o-projeto)
   - [Conclusão](#conclusão)
 
@@ -116,8 +117,9 @@ requisição.
 Apesar dessas limitações, o sistema é válido como prova de conceito e também implementa o sistema
 requisitado pela atividade do curso.
 
-As próximas seções detalham a implementação, apresentam como executar o sistema, os resultados, e os
-pontos de melhoria que poderia haver com mais tempo. O relatório fecha com uma breve conclusão.
+As próximas seções detalham a implementação, apresentam como executar o sistema e os resultados,
+verificam se os requisitos da atividade foram cumpridos e apresentam ideias de melhoria para o
+sistema. O relatório encerra com uma breve conclusão.
 
 ## Implementação
 
@@ -153,8 +155,7 @@ seguinte forma:
 | Sensor 1          | -22.9027350  | -47.0563132   | Localização da FIAP |
 | Sensor 2          | -22.8517996  | -47.1284529   | Localização do [CTI](https://www.gov.br/cti/pt-br) |
 
-Inseri um DIP-switch para fazer a seleção dos sensores, como pode ser visto na
-figura abaixo.
+Inseri um _DIP-switch_ para fazer a seleção dos sensores, como pode ser visto na figura abaixo.
 
 | ![ESP32 usado como sensor de temperatura](ESP32_temperature_sensor.png) |
 |:--:| 
@@ -167,7 +168,7 @@ dinâmica da identificação.
 O ESP32 coleta os dados de temperatura e envia para o broker MQTTx a cada 2 segundos.
 
 Abaixo, podemos ver um exemplo do que é impresso na porta serial do Wokwi, para o sensor 1. Os
-sensores 0 e 2 são muito semelhantes, exceto sua identificação.
+sensores 0 e 2 são muito semelhantes, ao 1, exceto sua identificação.
 
 ```
 rst:0x1 (POWERON_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)
@@ -274,10 +275,11 @@ simples, mas sim uma que classifica a latitude e a longitude como propriedades d
 dentro de uma variável que contém o dado de temperatura.
 
 Mas, quando consegui formatar a variável conforme o modelo esperado, o mapa passou a funcionar como
-esperado. O formato da variável MQTT será detalhada em uma das próximas seções.
+esperado. O formato da variável MQTT será melhor mostrada na seção
+[Mensagens MQTT](#mensagens-mqtt).
 
 Dado que o mapa é o elemento mais chamativo do dashboard, achei interessante adicionar algumas
-referências nele para deixá-lo mais intuitivo de compreender. Por isso, criei dois outros
+referências nele para deixá-lo mais intuitivo de compreender. Para isso, criei dois outros
 dispositivos: CPQD e FIAP, conforme pode ser visto na figura abaixo:
 
 | ![Lista de dispositivos no Ubidots](Ubidots_device_list.png) |
@@ -531,10 +533,20 @@ A tabela abaixo lista as mensagens MQTT utilizadas.
 Para se conectar ao servidor Ubidots, é necessário usar o token de acesso do dispositivo. Esse token
 é inserido no lugar do _username_ e a senha é deixada em branco.
 
-## Como executar e testar o sistema
+### Documentação
 
-As próximas subseções apresentam o procedimento para testar o programa. Recomenda-se que eles sejam
-executados na ordem apresentada.
+Apesar da documentação não fazer parte da implementação, convém registrar, para possíveis
+referências futuras, que este documento está sendo elaborado no formato Markdown, que o sumário
+está sendo criado com o plugin "Markdown All in One" e que ele está sendo transformado em PDF com 
+o plugin "Markdown PDF", ambos do VS Code.
+
+Os diagramas em blocos foram elaborados no site <https://www.drawio.com/> e suas fontes estão
+disponibilizados na pasta docs, com a extensão .drawio.
+
+## Procedimentos de teste e resultados obtidos
+
+As próximas subseções apresentam o procedimento para testar o programa e os resultados obtidos.
+Recomenda-se que eles sejam executados na ordem apresentada.
 
 Nesses procedimentos, o mais difícil é lidar com o Ubidots, pois os dispositivos e o _dashboard_
 da versão gratuita não podem ser compartilhados. Contudo, um usuário que já conhece o Ubidots será
@@ -543,7 +555,8 @@ capaz de reproduzir o dispositivo e o _dashboard_ com base no que foi apresentad
 
 ### Obtendo os arquivos de programa
 
-Baixe os arquivos do repositório e navegue até a pasta do projeto:
+Em um terminal de linha de comando, baixe os arquivos do repositório e navegue até a pasta do
+projeto:
 
 ```bash
 git clone https://github.com/cakira/IoT-Embarcados/
@@ -555,7 +568,8 @@ cd IoT-Embarcados/entregavel_2
 **Pré-requisito:** Docker instalado e configurado para execução sem `sudo`.
 
 1. **Instalação de Dependências (Apenas na primeira execução):** O projeto utiliza o plugin
-   _FlowFuse Dashboard_, que deve ser instalado no volume de dados local antes de iniciar o serviço:
+   _FlowFuse Dashboard_, que deve ser instalado no volume de dados local antes de iniciar o serviço.
+   Para isso, digite em uma janela de comando:
 
 ```bash
 docker run -it --rm -p 1880:1880 \
@@ -564,6 +578,12 @@ docker run -it --rm -p 1880:1880 \
     nodered/node-red:4.1.3 \
     -c "cd /data && npm install @flowfuse/node-red-dashboard@1.30.2"
 ```
+
+   O resultado pode ser visto abaixo:
+
+| ![Terminal de com comandos para carregamento do Node-RED - 1 de 2](Results_node_red_1.png) |
+|:--:| 
+| _Terminal de com comandos para carregamento do Node-RED - 1 de 2_ |
 
 2. **Execução do Node-RED:** Com o plugin instalado, execute o container para subir o serviço:
 
@@ -579,10 +599,32 @@ docker run -it --rm -p 1880:1880 \
   `data_node_red` através do bind mount.
 * **Versão:** O projeto foi validado no Node-RED versão 4.1.3. Para testar versões mais recentes,
   substitua a tag `4.1.3` do comando anterior por `latest`.
+* **Execução:** O sistema inicializa automaticamente assim que o comando docker acima é executado,
+  de forma que as etapas abaixo não são essenciais para ativação do Node-RED.
 
-Em seguida, use seu navegador para acessar o endereço http://127.0.0.1:1880/
+3. Use seu navegador para acessar o endereço <http://127.0.0.1:1880/dashboard>.  
+   Inicialmente o _dashboard_ do Node-RED está vazio.
 
-Para ver o _dashboard_, acesse o endereço http://127.0.0.1:1880/dashboard
+4. Caso haja interesse, a visão de fluxos do Node-RED está disponível no endereço
+   <http://127.0.0.1:1880>.  
+   Pode-se ir passando as mensagens boas-vindas até que a visão dos fluxos esteja disponível.  
+   Não é necessário alterar nenhum fluxo.
+   
+| ![Terminal de com comandos para carregamento do Node-RED - 2 de 2](Results_node_red_2.png) |
+|:--:| 
+| _Terminal de com comandos para carregamento do Node-RED - 2 de 2_ |
+
+| ![Dashboard do Node-RED recém inicializado](Results_node_red_dashboard_0.png) |
+|:--:| 
+| _Dashboard do Node-RED recém inicializado_ |
+
+| ![Mensagem de boas-vindas do Node-RED](Results_node_red_flows_1.png) |
+|:--:| 
+| _Mensagem de boas-vindas do Node-RED_ |
+
+| ![Visão fluxo do Node-RED](Results_node_red_flows_2.png) |
+|:--:| 
+| _Visão fluxo do Node-RED_ |
 
 ### Simular o ESP32 na plataforma Wokwi do VS Code
 
@@ -591,20 +633,35 @@ Para ver o _dashboard_, acesse o endereço http://127.0.0.1:1880/dashboard
 2. Altere as posições das chaves 7 e 8 do _DIP-Switch_ para que elas representem o ID 0 (`OFF`,
    `OFF`).
 3. Inicie o simulador e acompanhe as mensages de status na porta serial.
-4. Altere a temperatura no NTC para a temperatura que convir.
+4. Altere a temperatura no NTC para a temperatura que desejar.
 5. Confirme na porta serial que a temperatura desejada foi enviada ao _broker_.
 6. Interrompa a simulação.
-7. Repita o passo 2, mas posicionando as chaves para que elas representem o ID 1 ('OFF`, `ON`).
+7. Repita o passo 2, mas posicionando as chaves para que elas representem o ID 1 (`OFF`, `ON`).
 8. Repita os passos de 3 a 6.
-7. Repita o passo 2, mas posicionando as chaves para que elas representem o ID 2 ('ON`, `OFF`).
+7. Repita o passo 2, mas posicionando as chaves para que elas representem o ID 2 (`ON`, `OFF`).
 8. Repita os passos de 3 a 6.
+
+A figura abaixo mostra o ambiente de simulação do ESP32 no Wokwi. Na parte inferior, é possível ver
+as mensagens de status da porta serial.
+
+| ![Simulação do ESP32](Results_ESP32.png) |
+|:--:| 
+| _Simulação do ESP32_ |
 
 Caso tenha interesse, os 3 sensores ESP32 podem ser simulados simultaneamente, cada um em sua
 própria janela do VS Code.
 
 Caso o Node-RED já tenha sido carregado e esteja em execução como descrito na seção anterior
 [Carregar o programa Node-RED](#carregar-o-programa-node-red), os valores dos sensores pode ser
-acompanhados no _dashboard_ do Node-RED.
+acompanhados no _dashboard_ do Node-RED, como mostrado nas figuras abaixo.
+
+| ![Dashboard do Node-RED com o registro de um sensor](Results_node_red_dashboard_1.png) |
+|:--:| 
+| _Dashboard do Node-RED com o registro de um sensor_ |
+
+| ![Dashboard do Node-RED com o registro dos três sensores](Results_node_red_dashboard_2.png) |
+|:--:| 
+| _Dashboard do Node-RED com o registro dos três sensores_ |
 
 ### Solicitar uma temperatura no Ubidots
 
@@ -618,11 +675,52 @@ No _dashboard_ do Ubidots:
 1. Usar o slider vertical para selecionar uma latitude.
 2. Usar o slider horizontal para selecionar uma longitude.
 3. Clicar no botão redondo para disparar uma requisição de temperatura.
-4. Observar o resultado no mapa e a temperatura no ícone do termômetro no _dashboard_.
+4. Observar o resultado:
+   1. a localização é mostrada no mapa
+   2. a temperatura é mostrada no símbolo de termómetro
+   3. o custo acumulado também é mostrado
 
-## Resultados
+A figura abaixo mostra o resultado, já com as etapas acima destacadas.
 
-### Validação dos requisitos
+| ![Resultado de uma requisição no dashboard do Ubidots](Results_ubidots_dashboard_1.png) |
+|:--:| 
+| _Resultado de uma requisição no dashboard do Ubidots_ |
+
+A figura abaixo mostra o resultado após algumas requisições. Como o custo está aumentando em $0,01
+por requisição, é fácil saber que esse é o resultado após 7 requisições. O Ubidots traça em azul
+o percurso que os pontos fizeram no mapa.
+
+| ![Dashboard do Ubidots após 7 requisições](Results_ubidots_dashboard_2.png) |
+|:--:| 
+| _Dashboard do Ubidots após 7 requisições_ |
+
+Para fins de conferência, a figura abaixo mostra à direita as mensagens de debug no Node-RED
+correspondentes à ultima requisição de temperatura. Comparando a temperatura e o custo das mensagens
+da figura abaixo com as informações apresentadas no _dashboard_ da figura acima, podemos verificar
+que as mensagens enviadas pelo Node-RED efetivamente foram apresentadas no _dashboard_ do Ubidots.
+
+| ![Mensagens enviadas do Node-RED para o Ubidots](Results_node_red_debug_messages.png) |
+|:--:| 
+| _Mensagens enviadas do Node-RED para o Ubidots_ |
+
+### _Reset_ dos dados
+
+Por fim, executamos a ação administrativa de _reset_ dos dados, clicando nos botões _Reset Sensor_
+_Data_ e _Reset Request Counter_. Como podemos ver na figura abaixo, os dados dos sensores são
+removidos do _dashboard_ do Node-RED e o _Cost_ é zerado. Além disso, logo abaixo do botão, é
+impressa uma mensagem de status _Counter reset_.
+
+| ![Reset dos dados no dashboard do Node-RED](Results_node_red_dashboard_reset.png) |
+|:--:| 
+| _Reset dos dados no dashboard do Node-RED_ |
+
+A figura abaixo mostra que o custo foi zerado no _dashboard_ do Ubidots também.
+
+| ![Custo no dashboard do Ubidots após um reset](Results_ubidots_dashboard_reset.png) |
+|:--:| 
+| _Custo no dashboard do Ubidots após um reset_ |
+
+## Validação dos requisitos
 
 Não foram definidos requisitos formais para esta atividade, mas sim tarefas do enunciado. Abaixo
 está um resumo das tarefas definidas em [Descrição da tarefa](#descrição-da-tarefa), acompanhada
@@ -638,15 +736,17 @@ Eventuais comentários estão em _itálico_ abaixo da descrição da tarefa.
 3. ✅ No Wokwi, publicar telemetria MQTT em algum Broker
 4. ✅ No Ubidots, configurar integração MQTT usando Token do device/variáveis para consumir dados do
    Broker
-5. Validar se os dados do device estão atualizando no dashboard do Ubidots. Gere um relatório da
-   origem dos dados e comparar com o resultado final. Acrescente na documentação.
-6. Inserir print do dashboard atualizado na documentação
+5. ✅ Validar se os dados do device estão atualizando no dashboard do Ubidots. Gere um relatório da
+   origem dos dados e comparar com o resultado final. Acrescente na documentação.  
+   _Essa validação pode ser vista comparando as duas últimas imagems da seção anterior_
+   _[Solicitar uma temperatura no Ubidots](#solicitar-uma-temperatura-no-ubidots)_
+6. ✅ Inserir print do dashboard atualizado na documentação
 7. ✔️ Criar uma documentação adequada mostrando um rascunho simples da arquitetura, objetivo do
    projeto, descrição geral do sistema, explicação de cada componente, seu fluxo de interação entre
    eles, descrição das variaveis de publicação e subscrição e conclusões. Faça um documento formal
    com capa, titulo, indices, etc.  
    _Completado, com exceção de que o documento não possui capa._
-8. Fazer um pequeno video de poucos minutos mostrando o funcionamento dos sistemas, pode usar
+8. ✅ Fazer um pequeno video de poucos minutos mostrando o funcionamento dos sistemas, pode usar
    captura de tela.
 
 ## Possíveis melhoria para o projeto
@@ -690,7 +790,7 @@ O objetivo 2 foi cumprido, sendo que aprendi:
 * Como instalar pluggins, tanto através do _Palette Manager_ como através do comando `npm`.
 
 O objetivo 3 é subjetivo, sendo que é preciso de experiência e de intuição para afirmar se ele é ou
-não útil em um caso real. Contudo, é evidente que, das as limitações de uma prova de conceito, o
-sistema realiza aquilo a que ele se propõe.
+não útil em um caso real. Contudo, é evidente que, consideradas as limitações de uma prova de
+conceito, o sistema realiza aquilo a que ele se propõe sem nenhuma falha observada até o momento.
 
 Portanto, podemos assumir que este projeto atingiu todos os objetivos propostos.
