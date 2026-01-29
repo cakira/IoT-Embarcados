@@ -1,3 +1,4 @@
+*.backup
 .config.nodes.json
 .config.runtime.json
 .config.users.json
