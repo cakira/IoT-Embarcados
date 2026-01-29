@@ -103,7 +103,7 @@ void connectWiFi() {
         delay(500);
         Serial.print(".");
     }
-    Serial.println("\n[WiFi] Connected!");
+    Serial.println("\r\n[WiFi] Connected!");
 }
 
 void connectMQTT() {
@@ -138,7 +138,9 @@ void publishToBroker(const SystemState& state) {
         snprintf(topic, sizeof(topic),
             "IoT-Embarcados/akira/entrega/2/sensor/%u", device_id);
 
-        Serial.print("[MQTT] Publishing: ");
+        Serial.print("[MQTT] Topic: ");
+        Serial.println(topic);
+        Serial.print("[MQTT] Payload: ");
         Serial.println(payload);
 
         mqtt.publish(topic, payload);
@@ -151,18 +153,23 @@ void publishToBroker(const SystemState& state) {
 void setup() {
     Serial.begin(115200);
 
+    Serial.println("\r\n");
+    Serial.println("*");
+    Serial.println("* Program start");
+    Serial.println("*");
+
     // Configure GPIOs
     pinMode(PIN_ID0, INPUT_PULLUP);
     pinMode(PIN_ID1, INPUT_PULLUP);
 
     device_id = readDeviceId();
     if (device_id >= 3) {
-        Serial.printf("Device ID %u is not accepted. Freezing.\r\n", device_id);
+        Serial.printf("[CONF] Device ID %u is not accepted. Freezing.\r\n", device_id);
         // Freezing
         while (true) {
         };
     }
-    Serial.printf("Device ID: %u\r\n", device_id);
+    Serial.printf("[CONF] Device ID: %u\r\n", device_id);
 
 
     connectWiFi();
@@ -188,7 +195,8 @@ void loop() {
         current_state.temp = readTemperature(PIN_TEMPERATURE);
         updatePosition(current_state);
 
-        Serial.printf("Current temperature: %.2f.C\r\n", current_state.temp);
+        Serial.printf(
+            "[SENS] Current temperature: %.2f.C\r\n", current_state.temp);
         publishToBroker(current_state);
     }
 }
