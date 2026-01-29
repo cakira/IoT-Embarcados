@@ -164,13 +164,13 @@ void setup() {
 
     device_id = readDeviceId();
     if (device_id >= 3) {
-        Serial.printf("[CONF] Device ID %u is not accepted. Freezing.\r\n", device_id);
+        Serial.printf(
+            "[CONF] Device ID %u is not accepted. Freezing.\r\n", device_id);
         // Freezing
         while (true) {
         };
     }
     Serial.printf("[CONF] Device ID: %u\r\n", device_id);
-
 
     connectWiFi();
     connectMQTT();
