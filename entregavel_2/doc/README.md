@@ -32,66 +32,97 @@ _Por: Cleber Akira Nakandakare_
 
 ## Introdução
 
-Este documento apresenta a solução da atividade entregável 2 do curso de "IoT em Sistemas Embarcados 2025/2026".
+Este documento apresenta a solução da atividade entregável 2 do curso de "IoT em Sistemas Embarcados 
+2025/2026".
 
 O código-fonte completo e os artefatos do projeto estão disponíveis no repositório:
 <https://github.com/cakira/IoT-Embarcados/tree/main/entregavel_2>.
 
 ### Enunciado da Atividade
 
-> **Ferramentas:** Wokwi + HiveMQ (ou outro broker MQTT) + Plataforma Ubidots + Sistema desejado para Integração
+> **Ferramentas:** Wokwi + HiveMQ (ou outro broker MQTT) + Plataforma Ubidots + Sistema desejado 
+> para Integração
 >
-> 1. Criar device no Ubidots (2 a 4 variáveis de telemetria a critério do estudante) - Pode reutilizar a Atividade 1 mas tente ser criativo melhorando o projeto anterior.
-> 2. Configurar dashboard com widgets para o device criado - DICA: Como o Dashboard tem limite de 10 Variaveis, pode usar variaveis de contexto para aumentar esse limite. Veja Aulas da Semana 6
+> 1. Criar device no Ubidots (2 a 4 variáveis de telemetria a critério do estudante) - Pode 
+> reutilizar a Atividade 1 mas tente ser criativo melhorando o projeto anterior.
+> 2. Configurar dashboard com widgets para o device criado - DICA: Como o Dashboard tem limite de 10 
+> Variaveis, pode usar variaveis de contexto para aumentar esse limite. Veja Aulas da Semana 6
 > 3. No Wokwi, publicar telemetria MQTT em algum Broker (MQTTx, HiveMQ, Mosquito, etc)
-> 4. No Ubidots, configurar integração MQTT usando Token do device/variáveis para consumir dados do Broker (via bridge, plugin, ou fluxo suportado pela plataforma, pode ser criado um outro sistema com ESP32 como retransmissor como ex. da Semana 7).
-> 5. Validar se os dados do device estão atualizando no dashboard do Ubidots - Gere um relatorio (pode ser capturado do monitor serial) da origem dos dados e comparar com o resultado final. Acrescente na documentação.
+> 4. No Ubidots, configurar integração MQTT usando Token do device/variáveis para consumir dados do 
+> Broker (via bridge, plugin, ou fluxo suportado pela plataforma, pode ser criado um outro sistema 
+> com ESP32 como retransmissor como ex. da Semana 7).
+> 5. Validar se os dados do device estão atualizando no dashboard do Ubidots - Gere um relatorio 
+> (pode ser capturado do monitor serial) da origem dos dados e comparar com o resultado final. 
+> Acrescente na documentação.
 > 6. Inserir print do dashboard atualizado na documentação
-> 7. Criar uma documentação adequada mostrando um rascunho simples da arquitetura, objetivo do projeto, descrição geral do sistema, explicação de cada componente, seu fluxo de interação entre eles, descrição das variaveis de publicação e subscrição e conclusoes. Faça um documento formal com capa, titulo, indices, etc.
-> 8. Fazer um pequeno video de poucos minutos mostrando o funcionamento dos sistemas, pode usar captura de tela.
+> 7. Criar uma documentação adequada mostrando um rascunho simples da arquitetura, objetivo do 
+> projeto, descrição geral do sistema, explicação de cada componente, seu fluxo de interação entre 
+> eles, descrição das variaveis de publicação e subscrição e conclusoes. Faça um documento formal 
+> com capa, titulo, indices, etc.
+> 8. Fazer um pequeno video de poucos minutos mostrando o funcionamento dos sistemas, pode usar 
+> captura de tela.
 
 ## Arquitetura da Solução
 
-Para atender ao enunciado de forma coerente com uma aplicação real, imaginei um cenário onde o Ubidots não apenas recebe dados passivamente, mas atua como cliente de um serviço.
+Para atender ao enunciado de forma coerente com uma aplicação real, imaginei um cenário onde o 
+Ubidots não apenas recebe dados passivamente, mas atua como cliente de um serviço.
 
 ### Conceito: Serviço de Temperatura sob Demanda
 
-O sistema simula um serviço onde o usuário solicita a temperatura estimada para uma localização específica. Se o Ubidots solicitasse exatamente os mesmos dados brutos que o _broker_ já possui, ele se tornaria redundante. Portanto, o sistema funciona da seguinte forma:
+O sistema simula um serviço onde o usuário solicita a temperatura estimada para uma localização 
+específica. Se o Ubidots solicitasse exatamente os mesmos dados brutos que o _broker_ já possui, ele 
+se tornaria redundante. Portanto, o sistema funciona da seguinte forma:
 
 1.  Os sensores enviam dados brutos para um _broker_ MQTT.
 2.  O usuário usa o Ubidots para pedir a temperatura em uma coordenada qualquer.
-3.  Uma aplicação central processa essa requisição, calcula a temperatura através da interpolação das temperaturas dos sensores e retorna o valor processado.
+3.  Uma aplicação central processa essa requisição, calcula a temperatura através da interpolação 
+    das temperaturas dos sensores e retorna o valor processado.
 4.  O serviço contabiliza um custo financeiro por requisição.
 
-Essa abordagem justifica a existência de um processamento intermediário (o Node-RED) filtrando a passagem de dados entre domínios de informação diferente (domínio dos sensores e domínio do cliente) e agregando valor aos dados brutos.
+Essa abordagem justifica a existência de um processamento intermediário (o Node-RED) filtrando a 
+passagem de dados entre domínios de informação diferente (domínio dos sensores e domínio do cliente) 
+e agregando valor aos dados brutos.
 
-O sistema foi desenvolvido como uma Prova de Conceito (PoC). A escolha deste termo deve-se às restrições adotadas para simplificar o sistema:
+O sistema foi desenvolvido como uma Prova de Conceito (PoC). A escolha deste termo deve-se às 
+restrições adotadas para simplificar o sistema:
 
-1.  **Limitação de Sensores:** A tabela de sensores suporta apenas 3 posições para facilitar o modelo matemático.
-2.  **Modelo Matemático:** A inferência utiliza a equação de um plano (álgebra linear), o que restringe a precisão e não considera a curvatura da Terra.
+1.  **Limitação de Sensores:** A tabela de sensores suporta apenas 3 posições para facilitar o 
+    modelo matemático.
+2.  **Modelo Matemático:** A inferência utiliza a equação de um plano (álgebra linear), o que 
+    restringe a precisão e não considera a curvatura da Terra.
 3.  **Modelo de Custo:** O custo é meramente incremental ($0,01 fixo por requisição).
 
-Apesar dessas limitações, a arquitetura proposta é válida e escalável. Com a substituição do algoritmo matemático no Node-RED, o sistema poderia ser expandido para utilizar mais sensores e incluir outras grandezas ambientais, como umidade relativa, índice de poluição ou pressão atmosférica.
+Apesar dessas limitações, a arquitetura proposta é válida e escalável. Com a substituição do 
+algoritmo matemático no Node-RED, o sistema poderia ser expandido para utilizar mais sensores e 
+incluir outras grandezas ambientais, como umidade relativa, índice de poluição ou pressão 
+atmosférica.
 
 ### Diagrama em Blocos
 
-A solução integra três ESP32 simulados (entrada de dados), a plataforma Node-RED (processamento e integração) e o Ubidots (interface). O fluxo de comunicação é integralmente baseado no protocolo MQTT.
+A solução integra três ESP32 simulados (entrada de dados), a plataforma Node-RED (processamento e 
+integração) e o Ubidots (interface). O fluxo de comunicação é integralmente baseado no protocolo 
+MQTT.
 
 | ![Diagrama em blocos do Serviço de Temperatura por Localização](Block_diagram_1.png) |
 | :----------------------------------------------------------: |
 |   _Figura 1: Diagrama em blocos da arquitetura proposta_    |
 
-O enunciado permite liberdade na escolha da tecnologia de integração. Optei pelo Node-RED principalmente por interesse didático, visando aprender a utilizar melhor essa plataforma.
+O enunciado permite liberdade na escolha da tecnologia de integração. Optei pelo Node-RED 
+principalmente por interesse didático, visando aprender a utilizar melhor essa plataforma.
 
 ## Implementação
 
-O sistema divide-se em três partes: **Coleta de Dados**, **Interface com Cliente** e **Aplicação Node-RED**.
+O sistema divide-se em três partes: **Coleta de Dados**, **Interface com Cliente** e **Aplicação** 
+**Node-RED**.
 
 ### 1. Coleta de Dados
 
-A coleta é feita por três dispositivos ESP32 simulados no Wokwi. Cada um mede a temperatura ambiente através de um sensor NTC e envia essa informação, junto com a localização, para o _broker_ MQTTx a cada 2 segundos.
+A coleta é feita por três dispositivos ESP32 simulados no Wokwi. Cada um mede a temperatura ambiente 
+através de um sensor NTC e envia essa informação, junto com a localização, para o _broker_ MQTTx a 
+cada 2 segundos.
 
-Como o simulador Wokwi não possui GPS, defini as posições de forma fixa no código, correspondendo a localizações reais:
+Como o simulador Wokwi não possui GPS, defini as posições de forma fixa no código, correspondendo a 
+localizações reais:
 
 | ID | Localização | Latitude    | Longitude   |
 | :- | :---------- | :---------- | :---------- |
@@ -99,7 +130,8 @@ Como o simulador Wokwi não possui GPS, defini as posições de forma fixa no c�
 | 1  | FIAP        | -22.9027350 | -47.0563132 |
 | 2  | CTI         | -22.8517996 | -47.1284529 |
 
-Para diferenciar os dispositivos utilizando o mesmo código-fonte, inseri um _DIP-switch_. As chaves 7 e 8 configuram o ID do sensor (0, 1 ou 2) durante a inicialização.
+Para diferenciar os dispositivos utilizando o mesmo código-fonte, inseri um _DIP-switch_. As chaves 
+7 e 8 configuram o ID do sensor (0, 1 ou 2) durante a inicialização.
 
 | ![ESP32 usado como sensor de temperatura](ESP32_temperature_sensor.png) |
 | :----------------------------------------------------------: |
@@ -122,11 +154,15 @@ Abaixo, um exemplo da saída serial de um dos sensores, incluindo o formato JSON
 
 ### 2. Interface com Cliente (Ubidots)
 
-O Ubidots é a interface onde o cliente solicita o serviço. Criei um dispositivo virtual chamado _"Temperature Requester"_ com variáveis manuais para controlar a requisição:
+O Ubidots é a interface onde o cliente solicita o serviço. Criei um dispositivo virtual chamado 
+_"Temperature Requester"_ com variáveis manuais para controlar a requisição:
 
-Para solicitar a temperatura, é preciso selecionar a posição — latitude e longitude — e então enviar a solicitação ao Node-RED.
+Para solicitar a temperatura, é preciso selecionar a posição — latitude e longitude — e então enviar 
+a solicitação ao Node-RED.
 
-Idealmente, seria possível enviar tanto a localização como a requisição em uma única mensagem MQTT (agregada). Contudo, a plataforma Ubidots envia uma mensagem MQTT separada para cada _widget_/variável. Por isso, o sistema precisa tratar cada variável individualmente no Node-RED.
+Idealmente, seria possível enviar tanto a localização como a requisição em uma única mensagem MQTT 
+(agregada). Contudo, a plataforma Ubidots envia uma mensagem MQTT separada para cada _widget_/
+variável. Por isso, o sistema precisa tratar cada variável individualmente no Node-RED.
 
 A tabela abaixo detalha as variáveis configuradas no dispositivo _"Temperature Requester"_:
 
@@ -138,7 +174,8 @@ A tabela abaixo detalha as variáveis configuradas no dispositivo _"Temperature 
 | `cost` | Numérico | Node-RED → Ubidots | Variável de resposta com o custo acumulado do serviço. |
 | `position` | JSON | Node-RED → Ubidots | Variável composta que contém tanto a temperatura (valor) quanto a posição geográfica (contexto). |
 
-As variáveis `cost` e `position` são criadas automaticamente pelo Ubidots assim que a primeira mensagem MQTT de resposta é recebida.
+As variáveis `cost` e `position` são criadas automaticamente pelo Ubidots assim que a primeira 
+mensagem MQTT de resposta é recebida.
 
 | ![Dispositivo "Temperature Requester" no Ubidots](Ubidots_device.png) |
 | :----------------------------------------------------------: |
@@ -148,18 +185,30 @@ As variáveis `cost` e `position` são criadas automaticamente pelo Ubidots assi
 
 Para melhorar a usabilidade, realizei algumas customizações no _dashboard_:
 
-1.  **_Sliders_ de Latitude/Longitude:** Como a área de cobertura dos sensores é pequena (apenas a região de Campinas/SP), os valores padrão de 0 a 100 dos _sliders_ seriam inúteis. Limitei os ranges para a faixa específica de operação (ex: Latitude de -22.81° a -22.91°) com passo de 0.001°. Também posicionei o _slider_ de latitude na vertical e o de longitude na horizontal para remeter aos eixos de um mapa.
-2.  **Gatilho (`req_run`):** O Ubidots usa um componente de _Switch_ (0 ou 1). Para o sistema, o valor numérico não importa, apenas o evento da mudança de estado. Editei o controle para ocultar o texto e manter a mesma cor, funcionando visualmente como um botão de "Enviar".
-3.  **Mapa:** A configuração deste _widget_ apresentou um desafio técnico significativo, exigindo a leitura detalhada da documentação oficial.
-    * _Desafio:_ O _widget_ não utiliza uma hierarquia de variáveis simples. Ele exige que a latitude e a longitude sejam passadas como propriedades dentro de um objeto `context`, que por sua vez fica dentro da variável de valor (`value`) da temperatura.
-    * _Solução:_ Essa estrutura JSON complexa teve que ser montada manualmente via JavaScript no fluxo do Node-RED para que o pino fosse renderizado corretamente no mapa.
-    * _Marcadores de Referência:_ Para dar contexto visual, criei dois dispositivos "fictícios" no Ubidots (CPQD e FIAP) apenas para exibir marcadores estáticos no mapa.
+1.  **_Sliders_ de Latitude/Longitude:** Como a área de cobertura dos sensores é pequena (apenas a 
+    região de Campinas/SP), os valores padrão de 0 a 100 dos _sliders_ seriam inúteis. Limitei os 
+    ranges para a faixa específica de operação (ex: Latitude de -22.81° a -22.91°) com passo de 0.
+    001°. Também posicionei o _slider_ de latitude na vertical e o de longitude na horizontal para 
+    remeter aos eixos de um mapa.
+2.  **Gatilho (`req_run`):** O Ubidots usa um componente de _Switch_ (0 ou 1). Para o sistema, o 
+    valor numérico não importa, apenas o evento da mudança de estado. Editei o controle para ocultar
+    o texto e manter a mesma cor, funcionando visualmente como um botão de "Enviar".
+3.  **Mapa:** A configuração deste _widget_ apresentou um desafio técnico significativo, exigindo a
+    leitura detalhada da documentação oficial.
+    * _Desafio:_ O _widget_ não utiliza uma hierarquia de variáveis simples. Ele exige que a 
+      latitude e a longitude sejam passadas como propriedades dentro de um objeto `context`, que por 
+      sua vez fica dentro da variável de valor (`value`) da temperatura.
+    * _Solução:_ Essa estrutura JSON complexa teve que ser montada manualmente via JavaScript no 
+      fluxo do Node-RED para que o pino fosse renderizado corretamente no mapa.
+    * _Marcadores de Referência:_ Para dar contexto visual, criei dois dispositivos "fictícios" no 
+      Ubidots (CPQD e FIAP) apenas para exibir marcadores estáticos no mapa.
 
 | ![Lista de dispositivos no Ubidots](Ubidots_device_list.png) |
 | :----------------------------------------------------------: |
 | _Figura 4: Dispositivos auxiliares criados para referência visual_ |
 
-Abaixo, o detalhe do mapa com os marcadores de referência (antena vermelha para CPQD e prédio para FIAP):
+Abaixo, o detalhe do mapa com os marcadores de referência (antena vermelha para CPQD e prédio para 
+FIAP):
 
 | ![Marcadores no mapa do Ubidots](Ubidots_map_detail.png) |
 | :----------------------------------------------------------: |
@@ -171,9 +220,11 @@ Abaixo, o detalhe do mapa com os marcadores de referência (antena vermelha para
 
 ### 3. Aplicação Node-RED (Integração e Lógica)
 
-O Node-RED é o coração do sistema. Ele é responsável por centralizar a lógica que não poderia ser executada nem nos sensores nem no _dashboard_.
+O Node-RED é o coração do sistema. Ele é responsável por centralizar a lógica que não poderia ser 
+executada nem nos sensores nem no _dashboard_.
 
-Também criei um _dashboard_ administrativo no próprio Node-RED para visualizar os dados brutos e zerar os dados dos sensores e o custo.
+Também criei um _dashboard_ administrativo no próprio Node-RED para visualizar os dados brutos e 
+zerar os dados dos sensores e o custo.
 
 | ![Dashboard no Node-RED](Node_red_dashboard.png) |
 | :----------------------------------------------: |
@@ -191,8 +242,8 @@ A lógica do fluxo foi dividida em partes para facilitar o entendimento.
 | :----------------------------------------------------------: |
 |   _Figura 9: Fluxo de armazenamento de dados_                |
 
-Sempre que um dado de sensor novo chega no _broker_ MQTT, ele é lido pelo Node-RED e armazenado em uma
-variável chamada `sensorData` do tipo vetor. Em seguida, a variável `sensorData` é formatada e
+Sempre que um dado de sensor novo chega no _broker_ MQTT, ele é lido pelo Node-RED e armazenado em 
+uma variável chamada `sensorData` do tipo vetor. Em seguida, a variável `sensorData` é formatada e
 apresentada em uma tabela.
 
 O código javascript do nó `Store in sensorData` está abaixo. Podemos ver que ele armazena os dados
@@ -217,7 +268,8 @@ msg.payload = true;
 return msg;
 ```
 
-Para exibir esses dados no _Dashboard_ do Node-RED, o nó `Format as table` transforma esse objeto de estado em um _array_, que é o formato exigido pelo _widget_ de tabela:
+Para exibir esses dados no _Dashboard_ do Node-RED, o nó `Format as table` transforma esse objeto de 
+estado em um _array_, que é o formato exigido pelo _widget_ de tabela:
 
 ```javascript
 var sensors = flow.get('sensorData') || {};
@@ -249,7 +301,8 @@ return msg;
 | :----------------------------------------------------------: |
 | _Figura 10: Detalhe do fluxo de cálculo_ |
 
-O Node-RED monitora as variáveis de requisição do Ubidots. Quando a Latitude ou Longitude é alterada, o Node-RED armazena os dados.
+O Node-RED monitora as variáveis de requisição do Ubidots. Quando a Latitude ou Longitude é 
+alterada, o Node-RED armazena os dados.
 
 Código do nó `Store latitude`:
 ```javascript
@@ -261,11 +314,13 @@ Código do nó `Store longitude`:
 flow.set('requested_longitude', msg.payload);
 ```
 
-Quando o gatilho `req_run` é alterado, o nó de cálculo consome os dados armazenados na etapa anterior.
+Quando o gatilho `req_run` é alterado, o nó de cálculo consome os dados armazenados na etapa 
+anterior.
 
 A lógica matemática utiliza a **Equação Geral do Plano** definida pelos três sensores no espaço.
 
-> **Nota:** As funções JavaScript complexas, como o cálculo vetorial abaixo, foram geradas com auxílio de ferramenta de IA e validadas durante os testes.
+> **Nota:** As funções JavaScript complexas, como o cálculo vetorial abaixo, foram geradas com 
+> auxílio de ferramenta de IA e validadas durante os testes.
 
 O código também recalcula o custo e formata a mensagem a ser enviada para o Ubidots.
 
@@ -360,7 +415,8 @@ return msg;
 | :----------------------------------------------------------: |
 | _Figura 11: Fluxo de reset administrativo_ |
 
-Botões no _dashboard_ do Node-RED permitem limpar as variáveis `sensorData` e `cost`, facilitando a reinicialização dos testes sem precisar reiniciar o container Docker.
+Botões no _dashboard_ do Node-RED permitem limpar as variáveis `sensorData` e `cost`, facilitando a 
+reinicialização dos testes sem precisar reiniciar o container Docker.
 
 ### Mapeamento de Tópicos MQTT
 
@@ -384,13 +440,16 @@ Para se conectar ao servidor Ubidots, é necessário usar o token de acesso do d
 é inserido no lugar do _username_ e a senha é deixada em branco.
 
 ### Documentação
-Este relatório foi elaborado em Markdown no VS Code e transformado em PDF com o plugin "Markdown PDF". O diagrama em blocos foi feito no [Draw.io](https://www.drawio.com/) e exportado para a pasta `docs`.
+Este relatório foi elaborado em Markdown no VS Code e transformado em PDF com o plugin "Markdown 
+PDF". O diagrama em blocos foi feito no [Draw.io](https://www.drawio.com/) e exportado para a pasta 
+`docs`.
 
 ---
 
 ## Procedimentos de Teste e Resultados
 
-Recomenda-se seguir a ordem abaixo para validar o funcionamento do sistema e comprovar a integração entre as partes.
+Recomenda-se seguir a ordem abaixo para validar o funcionamento do sistema e comprovar a integração 
+entre as partes.
 
 ### Obtendo os Arquivos
 
@@ -425,7 +484,9 @@ cd IoT-Embarcados/entregavel_2
         nodered/node-red:4.1.3
     ```
     **Nota sobre Versões:**
-    O comando acima utiliza a tag `nodered/node-red:4.1.3`, que é a versão específica na qual este projeto foi validado. Caso deseje utilizar a versão mais recente do Node-RED, substitua `4.1.3` por `latest` no comando.
+    O comando acima utiliza a tag `nodered/node-red:4.1.3`, que é a versão específica na qual este 
+    projeto foi validado. Caso deseje utilizar a versão mais recente do Node-RED, substitua `4.1.3` 
+    por `latest` no comando.
 
     | ![Terminal de com comandos para carregamento do Node-RED - 2 de 2](Results_node_red_2.png) |
     | :----------------------------------------------------------: |
@@ -454,7 +515,8 @@ cd IoT-Embarcados/entregavel_2
     | _Figura 16: Simulação Wokwi com logs seriais_ |
 
 4.  Repita para o **ID 1** (`OFF`, `ON`) e **ID 2** (`ON`, `OFF`).
-5.  _Verificação:_ Abra o _dashboard_ do Node-RED e confirme se os dados estão chegando. Abaixo, a evolução do _dashboard_ conforme os sensores são ligados.
+5.  _Verificação:_ Abra o _dashboard_ do Node-RED e confirme se os dados estão chegando. Abaixo, a 
+    evolução do _dashboard_ conforme os sensores são ligados.
 
     | ![Dashboard do Node-RED com o registro de um sensor](Results_node_red_dashboard_1.png) |
     | :----------------------------------------------------------: |
@@ -466,7 +528,8 @@ cd IoT-Embarcados/entregavel_2
 
 ### Solicitar uma Temperatura (Ubidots)
 
-Como a conta gratuita do Ubidots não permite compartilhar _dashboards_, os passos abaixo descrevem a validação na interface criada:
+Como a conta gratuita do Ubidots não permite compartilhar _dashboards_, os passos abaixo descrevem a 
+validação na interface criada:
 
 1.  Use o _slider_ vertical para selecionar uma latitude.
 2.  Use o _slider_ horizontal para selecionar uma longitude.
@@ -480,14 +543,16 @@ Como a conta gratuita do Ubidots não permite compartilhar _dashboards_, os pass
 | :----------------------------------------------------------: |
 |   _Figura 19: Resultado da requisição no Ubidots_             |
 
-Após realizar 7 requisições distintas, o Ubidots traça o histórico dos pontos no mapa e o custo acumulado sobe para $0,07:
+Após realizar 7 requisições distintas, o Ubidots traça o histórico dos pontos no mapa e o custo 
+acumulado sobe para $0,07:
 
 | ![Dashboard do Ubidots após 7 requisições](Results_ubidots_dashboard_2.png) |
 | :----------------------------------------------------------: |
 |   _Figura 20: Histórico de requisições e custo acumulado_     |
 
 **Validação Cruzada (Debug):**
-Para provar que os dados do Node-RED chegaram corretamente no Ubidots, podemos comparar as mensagens de debug com o resultado no _dashboard_ acima:
+Para provar que os dados do Node-RED chegaram corretamente no Ubidots, podemos comparar as mensagens 
+de debug com o resultado no _dashboard_ acima:
 
 | ![Mensagens enviadas do Node-RED para o Ubidots](Results_node_red_debug_messages.png) |
 | :----------------------------------------------------------: |
@@ -495,7 +560,8 @@ Para provar que os dados do Node-RED chegaram corretamente no Ubidots, podemos c
 
 ### Reset dos Dados
 
-Para provar o controle administrativo, clicamos nos botões "Reset Sensor Data" e "Reset Request Counter" no Node-RED.
+Para provar o controle administrativo, clicamos nos botões "Reset Sensor Data" e "Reset Request 
+Counter" no Node-RED.
 * **No Node-RED:** A tabela de sensores é limpa.
 * **No Ubidots:** O display de custo volta a zero imediatamente.
 
@@ -530,27 +596,40 @@ Para provar o controle administrativo, clicamos nos botões "Reset Sensor Data" 
 
 ## Possíveis Melhorias
 
-Algumas limitações foram notadas durante o desenvolvimento e poderiam ser abordadas em uma versão futura:
+Algumas limitações foram notadas durante o desenvolvimento e poderiam ser abordadas em uma versão 
+futura:
 
 * **Testes Automatizados:** Inclusão de testes unitários para a lógica de cálculo.
 * **Segurança:** Uso de MQTTS (TLS) para criptografar a comunicação.
-* **Validação dos Dados:** A aplicação deve validar se os dados que chegam no servidor são válidos antes de prosseguir, sobretudo para os dados de cliente.
-* **Escalabilidade:** O cálculo atual limita-se a 3 sensores formando um plano. Poderia ser expandido para usar mais sensores e com a troca do algoritmo.
-* **Curvatura da Terra:** Os cálculos atuais assumem um plano cartesiano simples. Para distâncias maiores, seria necessário considerar a curvatura da Terra.
-* **Tratamento de Erro:** O Ubidots não exibe mensagem de erro caso o usuário tente uma requisição sem que os sensores estejam online (o erro aparece apenas no debug do Node-RED).
+* **Validação dos Dados:** A aplicação deve validar se os dados que chegam no servidor são válidos 
+  antes de prosseguir, sobretudo para os dados de cliente.
+* **Escalabilidade:** O cálculo atual limita-se a 3 sensores formando um plano. Poderia ser 
+  expandido para usar mais sensores e com a troca do algoritmo.
+* **Curvatura da Terra:** Os cálculos atuais assumem um plano cartesiano simples. Para distâncias 
+  maiores, seria necessário considerar a curvatura da Terra.
+* **Tratamento de Erro:** O Ubidots não exibe mensagem de erro caso o usuário tente uma requisição 
+  sem que os sensores estejam online (o erro aparece apenas no debug do Node-RED).
 * **Múltiplos Clientes:** Atualmente, o sistema está limitado a um cliente apenas.
-* **Troca de Grandezas:** Eventualmente, pode ser interessante trabalhar com outras grandezas, como umidade do ar, ou poluição atmosférica.
+* **Troca de Grandezas:** Eventualmente, pode ser interessante trabalhar com outras grandezas, como 
+  umidade do ar, ou poluição atmosférica.
 
 ## Conclusão
 
 Este projeto cumpriu três objetivos principais:
 
-1.  **Requisitos Acadêmicos:** A atividade foi entregue conforme o enunciado, integrando sensores, _broker_ e _dashboard_ na nuvem.
-2.  **Aprendizado Técnico:** O uso do **Node-RED** foi fundamental e cumpriu o objetivo didático. Não tendo grande familiaridade com a ferramenta, pude aprender a:
+1.  **Requisitos Acadêmicos:** A atividade foi entregue conforme o enunciado, integrando sensores, 
+    _broker_ e _dashboard_ na nuvem.
+2.  **Aprendizado Técnico:** O uso do **Node-RED** foi fundamental e cumpriu o objetivo didático. 
+    Não tendo grande familiaridade com a ferramenta, pude aprender a:
     * Instanciar e configurar um container Docker com a versão mais recente do Node-RED.
-    * Instalar plugins externos, tanto via _Palette Manager_ quanto via linha de comando (`npm install`).
+    * Instalar plugins externos, tanto via _Palette Manager_ quanto via linha de comando (`npm 
+      install`).
     * Configurar nós de entrada e saída MQTT.
-    * Integrar lógica complexa via nós de função JavaScript (com auxílio de IA, mas com revisão manual do código).
-    * Gerenciar o armazenamento de dados em memória utilizando variáveis de contexto de fluxo (`flow.get` / `flow.set`).
+    * Integrar lógica complexa via nós de função JavaScript (com auxílio de IA, mas com revisão
+      manual do código).
+    * Gerenciar o armazenamento de dados em memória utilizando variáveis de contexto de fluxo (`flow.
+      get` / `flow.set`).
     * Utilizar controle de versão (Git) para gerenciar o projeto do Node-RED.
-3.  **Prova de Conceito (PoC):** Apesar das simplificações (como posições fixas e cálculo planar), o sistema demonstra funcionalmente um serviço de valor agregado, onde o dado bruto é transformado em informação útil e monetizável.
+3.  **Prova de Conceito (PoC):** Apesar das simplificações (como posições fixas e cálculo planar), o 
+   sistema demonstra funcionalmente um serviço de valor agregado, onde o dado bruto é transformado 
+   em informação útil e monetizável.
