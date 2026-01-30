@@ -65,6 +65,14 @@ O sistema simula um serviço onde o usuário solicita a temperatura estimada par
 
 Essa abordagem justifica a existência de um processamento intermediário (o Node-RED), agregando valor aos dados brutos.
 
+O sistema foi desenvolvido como uma **Prova de Conceito (PoC)**. A escolha deste termo deve-se às simplificações adotadas para simplificar o sistema:
+
+1.  **Limitação de Sensores:** A tabela de inferência suporta apenas 3 posições fixas.
+2.  **Modelo Matemático:** A inferência utiliza a equação de um plano (álgebra linear), o que restringe a precisão e não considera a curvatura da Terra.
+3.  **Modelo de Custo:** O custo é meramente incremental ($0,01 fixo por requisição).
+
+Apesar dessas limitações, a arquitetura proposta é válida e escalável. Com a substituição do algoritmo matemático no Node-RED, o sistema poderia ser expandido para utilizar mais sensores e incluir outras grandezas ambientais, como umidade relativa, índice de poluição ou pressão atmosférica.
+
 ### Diagrama de Blocos
 
 A solução integra três ESP32 simulados (entrada de dados), a plataforma Node-RED (processamento e integração) e o Ubidots (interface). O fluxo de comunicação é integralmente baseado no protocolo MQTT.
@@ -116,10 +124,21 @@ Abaixo, um exemplo da saída serial de um dos sensores, evidenciando o formato J
 
 O Ubidots é a interface onde o cliente solicita o serviço. Criei um dispositivo virtual chamado _"Temperature Requester"_ com variáveis manuais para controlar a requisição:
 
-* `req_lat` e `req_lon`: Latitude e Longitude desejadas.
-* `req_run`: Gatilho da requisição.
-* `cost`: Custo acumulado (variável de resposta).
-* `position`: Variável de resposta contendo temperatura e contexto geográfico.
+Para solicitar a temperatura, é preciso selecionar a posição — latitude e longitude — e então enviar a solicitação ao Node-RED.
+
+Idealmente, seria possível enviar tanto a localização como a requisição em uma única mensagem MQTT (agregada). Contudo, a plataforma Ubidots envia uma mensagem MQTT separada para cada widget/variável. Por isso, o sistema precisa tratar cada variável individualmente no Node-RED.
+
+A tabela abaixo detalha as variáveis configuradas no dispositivo _"Temperature Requester"_:
+
+| Variável | Tipo | Direção | Descrição |
+| :--- | :--- | :--- | :--- |
+| `req_lat` | Numérico | Ubidots → Node-RED | Latitude desejada para a consulta. |
+| `req_lon` | Numérico | Ubidots → Node-RED | Longitude desejada para a consulta. |
+| `req_run` | Numérico | Ubidots → Node-RED | Gatilho da requisição. O valor numérico não importa, apenas a mudança de estado (evento). |
+| `cost` | Numérico | Node-RED → Ubidots | Variável de resposta com o custo acumulado do serviço. |
+| `position` | JSON | Node-RED → Ubidots | Variável composta que contém tanto a temperatura (valor) quanto a posição geográfica (contexto). |
+
+As variáveis `cost` e `position` são criadas automaticamente pelo Ubidots assim que a primeira mensagem MQTT de resposta é recebida.
 
 | ![Dispositivo "Temperature Requester" no Ubidots](Ubidots_device.png) |
 | :----------------------------------------------------------: |
@@ -131,7 +150,9 @@ Para melhorar a usabilidade, realizei algumas customizações no _dashboard_:
 
 1.  **Sliders de Latitude/Longitude:** Como a área de cobertura dos sensores é pequena (apenas a região de Campinas/SP), os valores padrão de 0 a 100 dos sliders seriam inúteis. Limitei os ranges para a faixa específica de operação (ex: Latitude de -22.81° a -22.91°) com passo de 0.001°. Também posicionei o slider de latitude na vertical e o de longitude na horizontal para remeter aos eixos de um mapa.
 2.  **Gatilho (`req_run`):** O Ubidots usa um componente de "Switch" (0 ou 1). Para o sistema, o valor numérico não importa, apenas o evento da mudança de estado. Editei o controle para ocultar o texto e manter a mesma cor, funcionando visualmente como um botão de "Enviar".
-3.  **Mapa:** A configuração deste widget foi desafiadora. O Ubidots exige uma hierarquia específica onde latitude e longitude devem ser propriedades dentro do "contexto" da variável de valor. Foi necessário ler cuidadosamente a documentação para formatar o JSON corretamente no Node-RED.
+3.  **Mapa:** A configuração deste widget apresentou um desafio técnico significativo, exigindo a leitura detalhada da documentação oficial.
+    * *Desafio:* O widget não utiliza uma hierarquia de variáveis simples. Ele exige que a latitude e a longitude sejam passadas como propriedades dentro de um objeto `context`, que por sua vez fica dentro da variável de valor (`value`) da temperatura.
+    * *Solução:* Essa estrutura JSON complexa teve que ser montada manualmente via JavaScript no fluxo do Node-RED para que o pino fosse renderizado corretamente no mapa.
     * *Marcadores de Referência:* Para dar contexto visual, criei dois dispositivos "fictícios" no Ubidots (CPQD e FIAP) apenas para exibir marcadores estáticos no mapa.
 
 | ![Lista de dispositivos no Ubidots](Ubidots_device_list.png) |
@@ -407,6 +428,8 @@ cd IoT-Embarcados/entregavel_2
         --mount type=bind,src=$PWD/data_node_red,dst=/data \
         nodered/node-red:4.1.3
     ```
+    **Nota sobre Versões:**
+    O comando acima utiliza a tag `nodered/node-red:4.1.3`, que é a versão específica na qual este projeto foi validado. Caso deseje utilizar a versão mais recente do Node-RED, substitua `4.1.3` por `latest` no comando.
 
     | ![Terminal de com comandos para carregamento do Node-RED - 2 de 2](Results_node_red_2.png) |
     | :----------------------------------------------------------: |
@@ -522,5 +545,11 @@ Algumas limitações foram notadas durante o desenvolvimento e poderiam ser abor
 Este projeto cumpriu três objetivos principais:
 
 1.  **Requisitos Acadêmicos:** A atividade foi entregue conforme o enunciado, integrando sensores, broker e dashboard na nuvem.
-2.  **Aprendizado Técnico:** O uso do **Node-RED** foi fundamental. Não tendo familiaridade prévia, pude aprender a instanciar containers Docker, instalar plugins, criar fluxos MQTT e, principalmente, gerenciar estados de sensores utilizando variáveis de contexto (`flow.get`/`set`) e integrar lógica JavaScript para processamento de dados.
+2.  **Aprendizado Técnico:** O uso do **Node-RED** foi fundamental e cumpriu o objetivo didático. Não tendo grande familiaridade com a ferramenta, pude aprender a:
+    * Instanciar e configurar um container Docker com a versão mais recente do Node-RED.
+    * Instalar plugins externos, tanto via *Palette Manager* quanto via linha de comando (`npm install`).
+    * Configurar nós de entrada e saída MQTT.
+    * Integrar lógica complexa via nós de função JavaScript (com auxílio de IA, mas com revisão manual do código).
+    * Gerenciar o armazenamento de dados em memória utilizando variáveis de contexto de fluxo (`flow.get` / `flow.set`).
+    * Utilizar controle de versão (Git) para gerenciar o projeto do Node-RED.
 3.  **Prova de Conceito (PoC):** Apesar das simplificações (como posições fixas e cálculo planar), o sistema demonstra funcionalmente um serviço de valor agregado, onde o dado bruto é transformado em informação útil (temperatura estimada) e monetizável (custo por requisição).
