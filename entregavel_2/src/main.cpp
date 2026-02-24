@@ -110,7 +110,7 @@ void connectMQTT() {
     mqtt.setServer(MQTT_BROKER, MQTT_PORT);
 
     while (!mqtt.connected()) {
-        Serial.print("[MQTT] Connecting to Ubidots...");
+        Serial.print("[MQTT] Connecting to MQTTx...");
 
         if (mqtt.connect("")) {
             Serial.println(" Connected!");
