@@ -1,0 +1,932 @@
+[
+    {
+        "id": "f6f2187d.f17ca8",
+        "type": "tab",
+        "label": "Flow 1",
+        "disabled": false,
+        "info": ""
+    },
+    {
+        "id": "40efd4ecef943519",
+        "type": "mqtt-broker",
+        "name": "MQTTx",
+        "broker": "broker.emqx.io",
+        "port": 1883,
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": 4,
+        "keepalive": 60,
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closeRetain": "false",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willRetain": "false",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "100988a04d9e3288",
+        "type": "mqtt-broker",
+        "name": "Ubidots",
+        "broker": "industrial.api.ubidots.com",
+        "port": 1883,
+        "clientid": "temperature-requester",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": 4,
+        "keepalive": 60,
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closeRetain": "false",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willRetain": "false",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "56809ed266719da4",
+        "type": "ui-base",
+        "name": "PoC - Location-Based Temperature Service",
+        "path": "/dashboard",
+        "appIcon": "",
+        "includeClientData": true,
+        "acceptsClientConfig": [
+            "ui-notification",
+            "ui-control"
+        ],
+        "showPathInSidebar": false,
+        "headerContent": "dashboard",
+        "navigationStyle": "none",
+        "titleBarStyle": "default",
+        "showReconnectNotification": true,
+        "notificationDisplayTime": 1,
+        "showDisconnectNotification": true,
+        "allowInstall": false
+    },
+    {
+        "id": "7a3e408d80ce3dbd",
+        "type": "ui-theme",
+        "name": "Default Theme",
+        "colors": {
+            "surface": "#ffffff",
+            "primary": "#0094CE",
+            "bgPage": "#eeeeee",
+            "groupBg": "#ffffff",
+            "groupOutline": "#cccccc"
+        },
+        "sizes": {
+            "density": "default",
+            "pagePadding": "12px",
+            "groupGap": "12px",
+            "groupBorderRadius": "4px",
+            "widgetGap": "12px"
+        }
+    },
+    {
+        "id": "e47d97060bc4289f",
+        "type": "ui-page",
+        "name": "Page 1",
+        "ui": "56809ed266719da4",
+        "path": "",
+        "icon": "home",
+        "layout": "grid",
+        "theme": "7a3e408d80ce3dbd",
+        "breakpoints": [
+            {
+                "name": "Default",
+                "px": "0",
+                "cols": "3"
+            },
+            {
+                "name": "Tablet",
+                "px": "576",
+                "cols": "6"
+            },
+            {
+                "name": "Small Desktop",
+                "px": "768",
+                "cols": "9"
+            },
+            {
+                "name": "Desktop",
+                "px": "1024",
+                "cols": "12"
+            }
+        ],
+        "order": 1,
+        "className": "",
+        "visible": true,
+        "disabled": false
+    },
+    {
+        "id": "ca943bbe3b35d2a2",
+        "type": "ui-group",
+        "name": "Group 1",
+        "page": "e47d97060bc4289f",
+        "width": 6,
+        "height": 1,
+        "order": 1,
+        "showTitle": false,
+        "className": "",
+        "visible": "true",
+        "disabled": "false",
+        "groupType": "default"
+    },
+    {
+        "id": "73936010ef6bfc73",
+        "type": "mqtt-broker",
+        "name": "ThingSpeak",
+        "broker": "mqtt3.thingspeak.com",
+        "port": 1883,
+        "clientid": "HSk4KwEjOBsDORE2PQ0sLDY",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": 4,
+        "keepalive": "60",
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closeRetain": "false",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willRetain": "false",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "3cc11d24.ff01a2",
+        "type": "comment",
+        "z": "f6f2187d.f17ca8",
+        "name": "WARNING: please check you have started this container with a volume that is mounted to /data\\n otherwise any flow changes are lost when you redeploy or upgrade the container\\n (e.g. upgrade to a more recent node-red docker image).\\n  If you are using named volumes you can ignore this warning.\\n Double click or see info side panel to learn how to start Node-RED in Docker to save your work",
+        "info": "\nTo start docker with a bind mount volume (-v option), for example:\n\n```\ndocker run -it -p 1880:1880 -v /home/user/node_red_data:/data --name mynodered nodered/node-red\n```\n\nwhere `/home/user/node_red_data` is a directory on your host machine where you want to store your flows.\n\nIf you do not do this then you can experiment and redploy flows, but if you restart or upgrade the container the flows will be disconnected and lost. \n\nThey will still exist in a hidden data volume, which can be recovered using standard docker techniques, but that is much more complex than just starting with a named volume as described above.",
+        "x": 350,
+        "y": 80,
+        "wires": []
+    },
+    {
+        "id": "dba4d5d8d1d332b1",
+        "type": "mqtt in",
+        "z": "f6f2187d.f17ca8",
+        "name": "MQTT Sensor message",
+        "topic": "IoT-Embarcados/akira/entrega/2/sensor/+",
+        "qos": "1",
+        "datatype": "auto-detect",
+        "broker": "40efd4ecef943519",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 260,
+        "y": 320,
+        "wires": [
+            [
+                "97ec557e36ee8066",
+                "1dce79f96047c964"
+            ]
+        ]
+    },
+    {
+        "id": "9de60a1fb62a3c72",
+        "type": "mqtt in",
+        "z": "f6f2187d.f17ca8",
+        "name": "Request temperature",
+        "topic": "/v1.6/devices/temperature-requester/req_run/lv",
+        "qos": "1",
+        "datatype": "auto-detect",
+        "broker": "100988a04d9e3288",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 260,
+        "y": 820,
+        "wires": [
+            [
+                "57f5d8cc8c5dde9e"
+            ]
+        ]
+    },
+    {
+        "id": "8db5f4e7ec37cc1d",
+        "type": "change",
+        "z": "f6f2187d.f17ca8",
+        "name": "Reset cost",
+        "rules": [
+            {
+                "t": "set",
+                "p": "cost",
+                "pt": "flow",
+                "to": "0",
+                "tot": "num"
+            },
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "$fromMillis($millis(), '[H01]:[m01]:[s01]') & \" - Counter reset\"",
+                "tot": "jsonata"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 530,
+        "y": 500,
+        "wires": [
+            [
+                "8c4d2758a30e181e",
+                "e0cb0ab5eee7903b"
+            ]
+        ]
+    },
+    {
+        "id": "97ec557e36ee8066",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Store in sensorData",
+        "func": "// The topic comes in as \".../sensor/1\", \".../sensor/2\", etc.\n// We split the string to get the ID \"1\", \"2\", or \"3\"\nvar sensorID = msg.topic.split(\"/\").at(-1);\n\n// We get the current list of sensors from memory (or create an empty one)\nvar sensors = flow.get('sensorData') || {};\n\n// We save the payload (lat, lon, temp) into this object\nsensors[sensorID] = msg.payload;\n\n// Write it back to memory\nflow.set('sensorData', sensors);\n\n// We don't return anything because this is just storage.\nmsg.payload = true;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 520,
+        "y": 320,
+        "wires": [
+            [
+                "f212b31ae5d56cc0"
+            ]
+        ]
+    },
+    {
+        "id": "57f5d8cc8c5dde9e",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Format request for ThingSpeak",
+        "func": "var requestedX = flow.get('requested_latitude');\nvar requestedY = flow.get('requested_longitude');\n\nif (!requestedX || !requestedY) {\n    node.warn(\"Missing latitude or longitude\");\n    return null;\n}\n\n// Generate a unique 6-digit Request ID\nvar req_id = Date.now() % 1000000;\n\n// Save the Request ID to the flow memory so it can be\n// verified by the \"Process Result\" function node\nflow.set('current_request_id', req_id);\n\n// Build the payload for ThingSpeak Channel 2 (Requests)\nmsg.payload = {\n    \"api_key\": \"VU1D5XND06JGYQZ0\",\n    \"field1\": req_id,\n    \"field2\": requestedX,\n    \"field3\": requestedY\n};\n\nmsg.headers = {\n    \"Content-Type\": \"application/json\"\n};\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 550,
+        "y": 820,
+        "wires": [
+            [
+                "471eefd8dc121569",
+                "bcff5f4ca3260bc1"
+            ]
+        ]
+    },
+    {
+        "id": "1dce79f96047c964",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "debug 1",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 480,
+        "y": 280,
+        "wires": []
+    },
+    {
+        "id": "13bc528fa8d9fd51",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "debug 2",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 960,
+        "y": 300,
+        "wires": []
+    },
+    {
+        "id": "08d11752aa60dc14",
+        "type": "inject",
+        "z": "f6f2187d.f17ca8",
+        "name": "Clear status on initialization",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "str",
+        "x": 480,
+        "y": 560,
+        "wires": [
+            [
+                "8c4d2758a30e181e",
+                "e0cb0ab5eee7903b"
+            ]
+        ]
+    },
+    {
+        "id": "f212b31ae5d56cc0",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Format as table",
+        "func": "var sensors = flow.get('sensorData') || {};\nvar tableArray = [];\n\n// Loop through each sensor ID (\"1\", \"2\", \"3\"...)\n// and push the object into the array\nfor (var id in sensors) {\n    if (sensors.hasOwnProperty(id)) {\n        var data = sensors[id];\n\n        tableArray.push({\n            \"Sensor\": id,\n            \"Latitude\": data.lat,\n            \"Longitude\": data.lon,\n            \"Temp (°C)\": data.temp\n        });\n    }\n}\n\n// The user interface widget expects data in msg.payload\nmsg.payload = tableArray;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 760,
+        "y": 340,
+        "wires": [
+            [
+                "273d73f9da2c37c1",
+                "13bc528fa8d9fd51"
+            ]
+        ]
+    },
+    {
+        "id": "471eefd8dc121569",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "debug 3",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 840,
+        "y": 780,
+        "wires": []
+    },
+    {
+        "id": "cbd2e328d1059ac1",
+        "type": "change",
+        "z": "f6f2187d.f17ca8",
+        "name": "Reset sensorData",
+        "rules": [
+            {
+                "t": "set",
+                "p": "sensorData",
+                "pt": "flow",
+                "to": "{}",
+                "tot": "json"
+            },
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "$fromMillis($millis(), '[H01]:[m01]:[s01]') & \" - Sensor data reset\"",
+                "tot": "jsonata"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 510,
+        "y": 440,
+        "wires": [
+            [
+                "f212b31ae5d56cc0",
+                "e0cb0ab5eee7903b"
+            ]
+        ]
+    },
+    {
+        "id": "8c4d2758a30e181e",
+        "type": "change",
+        "z": "f6f2187d.f17ca8",
+        "name": "Get cost",
+        "rules": [
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "$flowContext(\"cost\") ? $flowContext(\"cost\") : 0",
+                "tot": "jsonata"
+            },
+            {
+                "t": "delete",
+                "p": "topic",
+                "pt": "msg"
+            }
+        ],
+        "action": "",
+        "property": "",
+        "from": "",
+        "to": "",
+        "reg": false,
+        "x": 740,
+        "y": 600,
+        "wires": [
+            [
+                "363be6467d4ec811",
+                "0a4397e2b90bd4d9",
+                "7180c4faa5225801"
+            ]
+        ]
+    },
+    {
+        "id": "6407f06506c7491f",
+        "type": "mqtt out",
+        "z": "f6f2187d.f17ca8",
+        "name": "Send result",
+        "topic": "/v1.6/devices/temperature-requester",
+        "qos": "",
+        "retain": "",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "100988a04d9e3288",
+        "x": 850,
+        "y": 940,
+        "wires": []
+    },
+    {
+        "id": "0a111617b5fbbb15",
+        "type": "mqtt in",
+        "z": "f6f2187d.f17ca8",
+        "name": "Enter latitude",
+        "topic": "/v1.6/devices/temperature-requester/req_lat/lv",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "100988a04d9e3288",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 230,
+        "y": 700,
+        "wires": [
+            [
+                "035578d9afcbc70a"
+            ]
+        ]
+    },
+    {
+        "id": "035578d9afcbc70a",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Store latitude",
+        "func": "flow.set('requested_latitude', msg.payload);",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 470,
+        "y": 700,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "a915593f544bebbd",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Store longitude",
+        "func": "flow.set('requested_longitude', msg.payload);",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 480,
+        "y": 760,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "92f8968ae12bdaba",
+        "type": "mqtt in",
+        "z": "f6f2187d.f17ca8",
+        "name": "Enter longitude",
+        "topic": "/v1.6/devices/temperature-requester/req_lon/lv",
+        "qos": "2",
+        "datatype": "auto-detect",
+        "broker": "100988a04d9e3288",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 240,
+        "y": 760,
+        "wires": [
+            [
+                "a915593f544bebbd"
+            ]
+        ]
+    },
+    {
+        "id": "0a4397e2b90bd4d9",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "debug 4",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 960,
+        "y": 560,
+        "wires": []
+    },
+    {
+        "id": "7180c4faa5225801",
+        "type": "mqtt out",
+        "z": "f6f2187d.f17ca8",
+        "name": "Send cost",
+        "topic": "/v1.6/devices/temperature-requester/cost",
+        "qos": "",
+        "retain": "",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "100988a04d9e3288",
+        "x": 960,
+        "y": 640,
+        "wires": []
+    },
+    {
+        "id": "d9d46a0752196576",
+        "type": "ui-button",
+        "z": "f6f2187d.f17ca8",
+        "group": "ca943bbe3b35d2a2",
+        "name": "Reset cost button",
+        "label": "Reset Request Counter",
+        "order": 4,
+        "width": 0,
+        "height": 0,
+        "emulateClick": false,
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "iconPosition": "left",
+        "payload": "",
+        "payloadType": "str",
+        "topic": "topic",
+        "topicType": "msg",
+        "buttonColor": "",
+        "textColor": "",
+        "iconColor": "",
+        "enableClick": true,
+        "enablePointerdown": false,
+        "pointerdownPayload": "",
+        "pointerdownPayloadType": "str",
+        "enablePointerup": false,
+        "pointerupPayload": "",
+        "pointerupPayloadType": "str",
+        "x": 250,
+        "y": 500,
+        "wires": [
+            [
+                "8db5f4e7ec37cc1d"
+            ]
+        ]
+    },
+    {
+        "id": "1f9891607966bdb0",
+        "type": "ui-button",
+        "z": "f6f2187d.f17ca8",
+        "group": "ca943bbe3b35d2a2",
+        "name": "Reset sensor button",
+        "label": "Reset Sensor Data",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "emulateClick": false,
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "iconPosition": "left",
+        "payload": "",
+        "payloadType": "str",
+        "topic": "topic",
+        "topicType": "msg",
+        "buttonColor": "",
+        "textColor": "",
+        "iconColor": "",
+        "enableClick": true,
+        "enablePointerdown": false,
+        "pointerdownPayload": "",
+        "pointerdownPayloadType": "str",
+        "enablePointerup": false,
+        "pointerupPayload": "",
+        "pointerupPayloadType": "str",
+        "x": 260,
+        "y": 440,
+        "wires": [
+            [
+                "cbd2e328d1059ac1"
+            ]
+        ]
+    },
+    {
+        "id": "363be6467d4ec811",
+        "type": "ui-text",
+        "z": "f6f2187d.f17ca8",
+        "group": "ca943bbe3b35d2a2",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "name": "Cost report",
+        "label": "Cost",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "style": false,
+        "font": "",
+        "fontSize": 16,
+        "color": "#717171",
+        "wrapText": false,
+        "className": "",
+        "value": "\"$\" & $formatNumber($number(msg.payload), \"#,##0.00\")",
+        "valueType": "jsonata",
+        "x": 970,
+        "y": 600,
+        "wires": []
+    },
+    {
+        "id": "e0cb0ab5eee7903b",
+        "type": "ui-text",
+        "z": "f6f2187d.f17ca8",
+        "group": "ca943bbe3b35d2a2",
+        "order": 5,
+        "width": 0,
+        "height": 0,
+        "name": "Status box",
+        "label": "",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "style": false,
+        "font": "",
+        "fontSize": 16,
+        "color": "#717171",
+        "wrapText": true,
+        "className": "",
+        "value": "payload",
+        "valueType": "msg",
+        "x": 750,
+        "y": 500,
+        "wires": []
+    },
+    {
+        "id": "273d73f9da2c37c1",
+        "type": "ui-table",
+        "z": "f6f2187d.f17ca8",
+        "group": "ca943bbe3b35d2a2",
+        "name": "Show sensorData",
+        "label": "Sensor Data",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "maxrows": 0,
+        "passthru": false,
+        "autocols": true,
+        "showSearch": false,
+        "deselect": true,
+        "selectionType": "none",
+        "columns": [],
+        "mobileBreakpoint": "sm",
+        "mobileBreakpointType": "defaults",
+        "action": "replace",
+        "className": "",
+        "x": 990,
+        "y": 340,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "2f92b6c75906b05d",
+        "type": "inject",
+        "z": "f6f2187d.f17ca8",
+        "name": "Timer",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "30",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 240,
+        "y": 220,
+        "wires": [
+            [
+                "b9b7eb6f5bfe75dc"
+            ]
+        ]
+    },
+    {
+        "id": "b9b7eb6f5bfe75dc",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Format sensorData as JSON for ThingSpeak",
+        "func": "// Get the current sensors from memory\nvar sensors = flow.get('sensorData') || {};\nvar sensorArray = [];\n\n// Loop through and format them into an array\nfor (var id in sensors) {\n    if (sensors.hasOwnProperty(id)) {\n        sensorArray.push({\n            \"id\": id,\n            \"lat\": sensors[id].lat,\n            \"lon\": sensors[id].lon,\n            \"temp\": sensors[id].temp\n        });\n    }\n}\n\n// Do not send if we don't have enough data yet\nif (sensorArray.length < 3) {\n    return null; \n}\n\n// Build the ThingSpeak payload\nmsg.payload = {\n    \"api_key\": \"A6KWFLMYP28AJT0A\",\n    \"field1\": JSON.stringify({ \"sensors\": sensorArray })\n};\n\n// Set headers for a JSON POST request\nmsg.headers = {\n    \"Content-Type\": \"application/json\"\n};\n\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 550,
+        "y": 220,
+        "wires": [
+            [
+                "b052c99a2a778eec"
+            ]
+        ]
+    },
+    {
+        "id": "b052c99a2a778eec",
+        "type": "http request",
+        "z": "f6f2187d.f17ca8",
+        "name": "Send to ThingSpeak",
+        "method": "POST",
+        "ret": "txt",
+        "paytoqs": "ignore",
+        "url": "https://api.thingspeak.com/update",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 940,
+        "y": 220,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "bcff5f4ca3260bc1",
+        "type": "http request",
+        "z": "f6f2187d.f17ca8",
+        "name": "Send Request to ThingSpeak",
+        "method": "POST",
+        "ret": "txt",
+        "paytoqs": "ignore",
+        "url": "https://api.thingspeak.com/update.json",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 900,
+        "y": 820,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "ea93ec1de723779d",
+        "type": "mqtt in",
+        "z": "f6f2187d.f17ca8",
+        "name": "Receive ThingSpeak Response",
+        "topic": "channels/3272805/subscribe",
+        "qos": "2",
+        "datatype": "json",
+        "broker": "73936010ef6bfc73",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 290,
+        "y": 940,
+        "wires": [
+            [
+                "a494092a99d988c5"
+            ]
+        ]
+    },
+    {
+        "id": "a494092a99d988c5",
+        "type": "function",
+        "z": "f6f2187d.f17ca8",
+        "name": "Process Result",
+        "func": "// The Response if formated as a JSON object\nvar data = msg.payload;\n\n// Retrieve the Request ID in the Response\nvar expected_id = flow.get('current_request_id');\n\n// Verify this MQTT message belongs to our latest request\nif (data.field1 && Number(data.field1) === expected_id) {\n    \n    var estimatedTemp = Number(data.field2);\n    var requestedX = flow.get('requested_latitude');\n    var requestedY = flow.get('requested_longitude');\n\n    // Rebuild the Ubidots payload\n    var newMsg = {\n        payload: {\n            \"position\": {\n                \"value\": estimatedTemp,\n                \"context\": {\n                    \"lat\": requestedX,\n                    \"lng\": requestedY\n                }\n            }\n        }\n    };\n\n    // Increase the cost for each properly received response\n    var cost = flow.get('cost') || 0;\n    cost += 0.01;\n    flow.set('cost', Number(cost.toFixed(2)));\n\n    return newMsg;\n}\n\n// If the ID in the request and response don't match,\n// ignore the message\nreturn null;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 540,
+        "y": 940,
+        "wires": [
+            [
+                "8c4d2758a30e181e",
+                "6407f06506c7491f",
+                "47484e3eab91960c"
+            ]
+        ]
+    },
+    {
+        "id": "69de0def3ac1394d",
+        "type": "comment",
+        "z": "f6f2187d.f17ca8",
+        "name": "After sending a Request to ThingSpeak, it processes and gives a Response",
+        "info": "",
+        "x": 620,
+        "y": 880,
+        "wires": []
+    },
+    {
+        "id": "47484e3eab91960c",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "debug 5",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 840,
+        "y": 1000,
+        "wires": []
+    }
+]

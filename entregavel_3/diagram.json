@@ -1,0 +1,48 @@
+{
+  "version": 1,
+  "author": "Anonymous maker",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "board-esp32-devkit-c-v4", "id": "esp", "top": 38.4, "left": 24.04, "attrs": {} },
+    {
+      "type": "wokwi-ntc-temperature-sensor",
+      "id": "ntc1",
+      "top": -113.1,
+      "left": -96.5,
+      "rotate": 90,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-text",
+      "id": "text4",
+      "top": -172.8,
+      "left": -96,
+      "attrs": { "text": "Sensor de temperatura" }
+    },
+    { "type": "wokwi-dip-switch-8", "id": "sw1", "top": -12.9, "left": 164.7, "attrs": {} },
+    {
+      "type": "wokwi-text",
+      "id": "text3",
+      "top": 96,
+      "left": 220.8,
+      "attrs": {
+        "text": "(Set at startup only)\n\nDIP-Switch pins (7, 8):\n(off, off) --> device ID 0\n(off, on ) --> device ID 1\n(on , off) --> device ID 2\n(on , on ) --> reserved"
+      }
+    }
+  ],
+  "connections": [
+    [ "esp:TX", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX", "$serialMonitor:TX", "", [] ],
+    [ "ntc1:VCC", "esp:3V3", "red", [ "v9.6", "h67.2", "v67.2" ] ],
+    [ "ntc1:OUT", "esp:32", "green", [ "v9.6", "h0.1", "v124.8" ] ],
+    [ "ntc1:GND", "esp:GND.2", "black", [ "v28.8", "h163.2", "v48" ] ],
+    [ "j1:J", "sw1:2b", "", [ "h-28.8", "v28.5" ] ],
+    [ "j1:J", "sw1:6b", "", [ "v0" ] ],
+    [ "j1:J", "sw1:7b", "", [ "v0" ] ],
+    [ "esp:23", "sw1:7a", "green", [ "h0" ] ],
+    [ "sw1:8a", "esp:15", "green", [ "v48", "h-67.2", "v124.8" ] ],
+    [ "esp:GND.2", "sw1:7b", "black", [ "h19.2", "v-86.4", "h86.4" ] ],
+    [ "sw1:7b", "sw1:8b", "black", [ "v-9.3", "h9.6" ] ]
+  ],
+  "dependencies": {}
+}
