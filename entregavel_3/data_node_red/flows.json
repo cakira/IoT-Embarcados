@@ -497,7 +497,7 @@
         "expiry": "",
         "broker": "100988a04d9e3288",
         "x": 850,
-        "y": 940,
+        "y": 980,
         "wires": []
     },
     {
@@ -770,7 +770,7 @@
         "id": "2f92b6c75906b05d",
         "type": "inject",
         "z": "f6f2187d.f17ca8",
-        "name": "Timer",
+        "name": "Timer 30s",
         "props": [
             {
                 "p": "payload"
@@ -787,7 +787,7 @@
         "topic": "",
         "payload": "",
         "payloadType": "date",
-        "x": 240,
+        "x": 250,
         "y": 220,
         "wires": [
             [
@@ -811,7 +811,8 @@
         "y": 220,
         "wires": [
             [
-                "b052c99a2a778eec"
+                "b052c99a2a778eec",
+                "47484e3eab91960c"
             ]
         ]
     },
@@ -898,7 +899,7 @@
             [
                 "8c4d2758a30e181e",
                 "6407f06506c7491f",
-                "47484e3eab91960c"
+                "0b0fbfa5f442ad00"
             ]
         ]
     },
@@ -908,7 +909,7 @@
         "z": "f6f2187d.f17ca8",
         "name": "After sending a Request to ThingSpeak, it processes and gives a Response",
         "info": "",
-        "x": 620,
+        "x": 600,
         "y": 880,
         "wires": []
     },
@@ -925,8 +926,25 @@
         "targetType": "msg",
         "statusVal": "",
         "statusType": "auto",
+        "x": 900,
+        "y": 180,
+        "wires": []
+    },
+    {
+        "id": "0b0fbfa5f442ad00",
+        "type": "debug",
+        "z": "f6f2187d.f17ca8",
+        "name": "debug 6",
+        "active": false,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
         "x": 840,
-        "y": 1000,
+        "y": 940,
         "wires": []
     }
 ]
