@@ -347,7 +347,7 @@ Complementando o mapeamento de tópicos da Entrega 2, a comunicação com o ecos
 
 | ![Novo Fluxo no Node-RED](Node_red_flow_thingspeak.png) |
 | :-------------------------------------------------: |
-| _Figura 7: Novo fluxo Node-RED orquestrando requisições HTTP e subscrições MQTT_ |
+| _Figura 7: Novo fluxo Node-RED orquestrando requisições HTTP e subscrições MQTT. Os destaques em azul representam os novos nós_ |
 
 ## Implementação da Lógica no ThingSpeak
 
@@ -356,17 +356,23 @@ A inteligência do sistema foi implementada utilizando os aplicativos nativos do
 * **Gatilho (*React App*):** Configurado para monitorar inserções de dados. Sempre que o Node-RED posta uma nova coordenada no canal *Request*, o aplicativo aciona automaticamente o script de análise no MATLAB.
 * **Processamento Matemático (*MATLAB Analysis*):** O script lê o JSON armazenado no canal *Geosensors* e extrai a matriz de dados. Em seguida, calcula a distância euclidiana entre a coordenada solicitada e todos os sensores disponíveis na rede, **selecionando dinamicamente os 3 sensores mais próximos**. Com estes três pontos espaciais, aplica-se o produto vetorial para encontrar a Equação do Plano, estimando a temperatura local. O resultado, atrelado ao `request_id` original, é escrito no canal *Response*.
 * **Visualização de Dados (*MATLAB Visualizations*):** Foram criadas visualizações programadas em MATLAB para auditoria direta no painel do ThingSpeak:
-  * Uma tabela dinâmica de dados no canal *Geosensors* que extrai as informações do JSON e exibe os sensores ativos.
+  * Uma tabela gerada a partir de dados no canal *Geosensors* que extrai as informações do JSON e exibe os sensores ativos.
 
-| ![Tabela de Sensores no ThingSpeak](Thingspeak_sensor_table.png) |
+| ![Visão do Canal Geosensors, com a tabela dinâmica gerada](Thingspeak_channel_geosensors.png) |
 | :------------------------------------------------------------: |
-| _Figura 8: Tabela dinâmica gerada no canal Geosensors_         |
+| _Figura 8: Visão do Canal Geosensors, com a tabela gerada_     |
 
   * Um mapa de dispersão geográfica no canal *Response* que plota a posição dos sensores, utilizando uma escala de cores baseada em temperatura, juntamente com a localização exata solicitada pelo usuário.
 
+| ![Visão do Canal Response, incluindo o mapa gerada](Thingspeak_channel_response.png) |
+| :------------------------------------------------------------: |
+|  _Figura 9: Visão do Canal Response, incluindo o mapa gerada_  |
+
 | ![Mapa de Resposta no ThingSpeak](Thingspeak_response_map.png) |
 | :----------------------------------------------------------: |
-| _Figura 9: Mapa de dispersão geográfica gerado no canal Response_ |
+| _Figura 10: Mapa de dispersão geográfica gerado no canal Response_ |
+
+Note que essa tabela e mapa gerados não são verdadeiramente dinâmicos, pois é necessário executar um _refresh_ da página para que os dados sejam atualizados.
 
 ## Análise Crítica: Benefícios e Limitações
 
