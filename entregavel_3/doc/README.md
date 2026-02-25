@@ -26,13 +26,12 @@ _Por: Cleber Akira Nakandakare_
   - [Validação dos Requisitos](#validação-dos-requisitos)
   - [Limitações e Trabalhos Futuros](#limitações-e-trabalhos-futuros)
   - [Conclusão](#conclusão)
-  - [Apêndice: Entrega 3 - Migração da Lógica de Processamento para o ThingSpeak](#apêndice-entrega-3---migração-da-lógica-de-processamento-para-o-thingspeak)
-    - [Nova Arquitetura e Fluxo de Dados](#nova-arquitetura-e-fluxo-de-dados)
-    - [Estrutura dos Dados e Integração](#estrutura-dos-dados-e-integração)
-      - [Tabela Complementar de Comunicação (Node-RED ↔ ThingSpeak)](#tabela-complementar-de-comunicação-node-red--thingspeak)
-    - [Implementação da Lógica no ThingSpeak](#implementação-da-lógica-no-thingspeak)
-    - [Análise Crítica: Benefícios e Limitações](#análise-crítica-benefícios-e-limitações)
-    - [📌 Anexo: Guia para Inserção de Figuras](#-anexo-guia-para-inserção-de-figuras)
+- [Apêndice: Entrega 3 - Migração da Lógica de Processamento para o ThingSpeak](#apêndice-entrega-3---migração-da-lógica-de-processamento-para-o-thingspeak)
+  - [Nova Arquitetura e Fluxo de Dados](#nova-arquitetura-e-fluxo-de-dados)
+  - [Estrutura dos Dados e Integração](#estrutura-dos-dados-e-integração)
+    - [Tabela Complementar de Comunicação (Node-RED ↔ ThingSpeak)](#tabela-complementar-de-comunicação-node-red--thingspeak)
+  - [Implementação da Lógica no ThingSpeak](#implementação-da-lógica-no-thingspeak)
+  - [Análise Crítica: Benefícios e Limitações](#análise-crítica-benefícios-e-limitações)
 
 ---
 
@@ -283,13 +282,13 @@ Este projeto cumpriu integralmente os requisitos da disciplina de IoT, demonstra
 
 O uso do Node-RED como centralizador da lógica provou-se uma escolha arquitetural acertada, permitindo abstrair a complexidade matemática da interpolação e controlar a regra de cobrança, enquanto o Ubidots foi utilizado naquilo que oferece de melhor: visualização de dados e interação com o usuário final. Além da validação técnica, o desenvolvimento proporcionou domínio sobre a orquestração de containers Docker e fluxos MQTT avançados.
 
-## Apêndice: Entrega 3 - Migração da Lógica de Processamento para o ThingSpeak
+# Apêndice: Entrega 3 - Migração da Lógica de Processamento para o ThingSpeak
 
 Como uma evolução da Prova de Conceito original (Entrega 2), a arquitetura do sistema foi refatorada nesta Entrega 3 para transferir a responsabilidade de armazenamento histórico e o processamento matemático do Node-RED para o **ThingSpeak** (plataforma IoT da MathWorks).
 
-Neste novo cenário, o Node-RED atua primariamente como um agregador de dados (*gateway* e roteador), enquanto o motor do MATLAB embutido no ThingSpeak assume a execução da geometria analítica e a persistência dos dados na nuvem.
+Neste novo cenário, o Node-RED atua primariamente como um agregador de dados (*gateway* e roteador) e gerencia o envio das informações, enquanto o motor do MATLAB embutido no ThingSpeak assume a execução dos cálculos matemáticos.
 
-### Nova Arquitetura e Fluxo de Dados
+## Nova Arquitetura e Fluxo de Dados
 
 Para viabilizar a integração sem esbarrar nas restrições do plano gratuito do ThingSpeak (que permite apenas 8 campos de dados por canal e impõe um tempo mínimo de 15 segundos entre cada envio), a arquitetura adotou o empacotamento dos dados de múltiplos nós sensores em um único pacote JSON. O sistema foi estruturado em três canais no ThingSpeak:
 
@@ -301,7 +300,7 @@ Para viabilizar a integração sem esbarrar nas restrições do plano gratuito d
 | :----------------------------------------------------------: |
 |   _Figura 6: Diagrama da arquitetura atualizada integrando o motor do ThingSpeak_    |
 
-### Estrutura dos Dados e Integração
+## Estrutura dos Dados e Integração
 
 Para contornar o limite de campos e o tempo mínimo entre envios imposto pelo ThingSpeak, o Node-RED agrupa os dados de telemetria recebidos via MQTT em um objeto JSON unificado. 
 
@@ -332,7 +331,7 @@ Abaixo está o exemplo exato do formato do *payload* enviado via HTTP POST para 
 }
 ```
 
-#### Tabela Complementar de Comunicação (Node-RED ↔ ThingSpeak)
+### Tabela Complementar de Comunicação (Node-RED ↔ ThingSpeak)
 
 Complementando o mapeamento de tópicos da Entrega 2, a comunicação com o ecossistema ThingSpeak ocorre utilizando uma topologia mista (HTTP para escrita em lote e MQTT para leitura orientada a eventos):
 
@@ -342,7 +341,11 @@ Complementando o mapeamento de tópicos da Entrega 2, a comunicação com o ecos
 | **Node-RED** | ThingSpeak (Canal *Request*) | HTTP POST `/update` | Envio de uma nova requisição contendo o `request_id`, latitude e longitude alvo. |
 | **ThingSpeak** | Node-RED (Listener) | MQTT Sub `channels/3272805/subscribe` | Node-RED assina o canal de resposta para ser notificado assim que o cálculo for concluído na nuvem. |
 
-### Implementação da Lógica no ThingSpeak
+| ![Novo Fluxo no Node-RED](Node_red_flow_thingspeak.png) |
+| :-------------------------------------------------: |
+| _Figura 7: Novo fluxo Node-RED orquestrando requisições HTTP e subscrições MQTT_ |
+
+## Implementação da Lógica no ThingSpeak
 
 A inteligência do sistema foi implementada utilizando os aplicativos nativos do ThingSpeak. O fluxo de execução funciona da seguinte maneira:
 
@@ -350,30 +353,28 @@ A inteligência do sistema foi implementada utilizando os aplicativos nativos do
 * **Processamento Matemático (*MATLAB Analysis*):** O script lê o JSON armazenado no canal *Geosensors* e extrai a matriz de dados. Em seguida, calcula a distância euclidiana entre a coordenada solicitada e todos os sensores disponíveis na rede, **selecionando dinamicamente os 3 sensores mais próximos**. Com estes três pontos espaciais, aplica-se o produto vetorial para encontrar a Equação do Plano, estimando a temperatura local. O resultado, atrelado ao `request_id` original, é escrito no canal *Response*.
 * **Visualização de Dados (*MATLAB Visualizations*):** Foram criadas visualizações programadas em MATLAB para auditoria direta no painel do ThingSpeak:
   * Uma tabela dinâmica de dados no canal *Geosensors* que extrai as informações do JSON e exibe os sensores ativos.
+
+| ![Tabela de Sensores no ThingSpeak](Thingspeak_sensor_table.png) |
+| :------------------------------------------------------------: |
+| _Figura 8: Tabela dinâmica gerada no canal Geosensors_         |
+
   * Um mapa de dispersão geográfica no canal *Response* que plota a posição dos sensores, utilizando uma escala de cores baseada em temperatura, juntamente com a localização exata solicitada pelo usuário.
 
-### Análise Crítica: Benefícios e Limitações
+| ![Mapa de Resposta no ThingSpeak](Thingspeak_response_map.png) |
+| :----------------------------------------------------------: |
+| _Figura 9: Mapa de dispersão geográfica gerado no canal Response_ |
+
+## Análise Crítica: Benefícios e Limitações
 
 A transferência do processamento para o ThingSpeak trouxe vantagens conceituais, mas introduziu novos desafios que impactam o desempenho do sistema em um cenário de tempo real.
 
 **Benefícios:**
 * **Capacidade Matemática e Escalabilidade:** Embora o JavaScript (no Node-RED) seja excelente para manipulação de mensagens, operações matemáticas pesadas com grandes matrizes podem comprometer seu desempenho. Utilizar o motor do MATLAB permite implementar algoritmos de ordenação espacial complexos de forma nativa e altamente otimizada, escalando facilmente caso a rede cresça para dezenas de sensores.
-* **Persistência Independente:** Os dados brutos da rede de sensores e o histórico de cálculos agora possuem uma camada de armazenamento em banco de dados na nuvem, habilitando futuras auditorias sem depender da memória volátil do Node-RED.
+* **Modularidade e Separação de Interfaces:** É interessante mencionar que as únicas adaptações sistêmicas necessárias ocorreram no Node-RED. A configuração do painel no Ubidots permaneceu totalmente intacta, assim como o código-fonte essencial dos ESP32 (que só demandaria ajustes caso houvesse interesse em ter mais do que 3 sensores na rede). O fato de as extremidades do sistema não precisarem ser alteradas indica que a rigorosa separação de interfaces na implementação original (sem o ThingSpeak) foi uma escolha afortunada.
 * **Depuração Visual:** Os scripts de mapa e tabela integrados ao painel simplificam a visualização geoespacial para validação de calibração e cobertura da rede de sensores.
 
 **Limitações e Problemas Encontrados:**
 * **Aumento Expressivo da Latência:** Esta foi a principal regressão arquitetural observada nesta entrega. A exigência de um tempo mínimo de 15 segundos entre envios de dados (devido ao plano gratuito), somada ao tempo de disparo do gatilho interno e à execução do script MATLAB na nuvem, adicionou atrasos consideráveis ao ciclo de resposta. O sistema perdeu a reatividade instantânea presente na Entrega 2, tornando a interface no Ubidots visivelmente mais lenta.
 * **Complexidade Sistêmica e Dependência:** A arquitetura passou a depender de mais um serviço em nuvem de terceiros. A complexidade aumentou consideravelmente devido à necessidade de empacotar dados brutos, lidar com requisições assíncronas utilizando identificadores gerados dinamicamente (`request_id`) e gerenciar múltiplas chaves de autenticação de API.
 
-Em suma, a integração validou conceitos importantes de sistemas embarcados voltados para IoT, como a delegação de processamento pesado para a nuvem (*Edge-to-Cloud offloading*). Contudo, a lentidão imposta pelas limitações do serviço gratuito indica que, para garantir um fluxo rápido e contínuo de dados (alto *throughput*), seria necessário realizar o processamento em servidores locais mais potentes ou migrar para uma infraestrutura de nuvem dedicada e sem restrições de tempo de conexão.
-
-***
-
-### 📌 Anexo: Guia para Inserção de Figuras
-
-_Nota ao autor: Gere as imagens descritas abaixo e substitua os links correspondentes no documento._
-
-* **`Block_diagram_2.png` (Para a Figura 6)**: Desenhe um diagrama atualizado. Mostre os ESP32 (Wokwi) enviando MQTT para o Broker, e o Broker para o Node-RED. Do Node-RED, saem duas setas (HTTP POST) para o ThingSpeak (canais *Geosensors* e *Request*). Mostre a engrenagem (MATLAB/React) ligando esses canais ao canal *Response*. Por fim, uma seta volta do canal *Response* (MQTT Subscribe) para o Node-RED, que repassa o dado ao Ubidots.
-* **`Node_red_flow_thingspeak.png`**: Uma captura de tela abrangendo todo o seu novo fluxo no Node-RED (arquivo `flows.json` atualizado). Deve evidenciar o *loop* temporal (Timer), os nós HTTP de envio, e o novo nó MQTT de recepção. *(Sugestão de inserção: Logo após o parágrafo explicativo da Tabela Complementar)*.
-* **`Thingspeak_sensor_table.png`**: Acesse o canal *Geosensors* no ThingSpeak. Capture apenas a tabela gerada pelo script MATLAB (mostrando as colunas de Sensor, Latitude, Longitude e Temperatura). *(Sugestão de inserção: Após a menção da "tabela dinâmica de dados" no tópico de Visualização).*
-* **`Thingspeak_response_map.png`**: Acesse o canal *Response* no ThingSpeak. Capture o mapa gerado pelo script contendo os marcadores de sensores, a localização solicitada (estrela) e a legenda. *(Sugestão de inserção: Após a menção do "mapa de dispersão geográfica" no tópico de Visualização).*
+Em suma, a integração demonstrou na prática a delegação do processamento matemático para o ThingSpeak na nuvem, o que abre uma enorme gama de análises matemáticas possíveis. Contudo, a lentidão imposta pelas limitações do serviço gratuito impede não apenas a obtenção rápida de respostas, como também trabalhar com mais do que 4 demandas por minuto.
