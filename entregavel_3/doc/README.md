@@ -26,6 +26,13 @@ _Por: Cleber Akira Nakandakare_
   - [Validação dos Requisitos](#validação-dos-requisitos)
   - [Limitações e Trabalhos Futuros](#limitações-e-trabalhos-futuros)
   - [Conclusão](#conclusão)
+  - [Apêndice: Entrega 3 - Migração da Lógica de Processamento para o ThingSpeak](#apêndice-entrega-3---migração-da-lógica-de-processamento-para-o-thingspeak)
+    - [Nova Arquitetura e Fluxo de Dados](#nova-arquitetura-e-fluxo-de-dados)
+    - [Estrutura dos Dados e Integração](#estrutura-dos-dados-e-integração)
+      - [Tabela Complementar de Comunicação (Node-RED ↔ ThingSpeak)](#tabela-complementar-de-comunicação-node-red--thingspeak)
+    - [Implementação da Lógica no ThingSpeak](#implementação-da-lógica-no-thingspeak)
+    - [Análise Crítica: Benefícios e Limitações](#análise-crítica-benefícios-e-limitações)
+    - [📌 Anexo: Guia para Inserção de Figuras](#-anexo-guia-para-inserção-de-figuras)
 
 ---
 
@@ -189,30 +196,30 @@ Siga os procedimentos abaixo para reproduzir o ambiente e validar o funcionament
 * Conta no Ubidots (Educational/Stem).
 
 Clone o repositório do projeto:
-;;;bash
+```bash
 git clone https://github.com/cakira/IoT-Embarcados/
 cd IoT-Embarcados/entregavel_2
-;;;
+```
 
 ### Inicialização do Node-RED (Docker)
 
 1.  **Instalação de dependências (Primeira execução):**
     Execute o comando abaixo para instalar o *FlowFuse Dashboard* no volume persistente:
-    ;;;bash
+    ```bash
     docker run -it --rm -p 1880:1880 \
         --mount type=bind,src=$PWD/data_node_red,dst=/data \
         --entrypoint /bin/bash \
         nodered/node-red:4.1.3 \
         -c "cd /data && npm install @flowfuse/node-red-dashboard@1.30.2"
-    ;;;
+    ```
 
 2.  **Execução do Serviço:**
     Inicie o container Node-RED:
-    ;;;bash
+    ```bash
     docker run -it --rm -p 1880:1880 \
         --mount type=bind,src=$PWD/data_node_red,dst=/data \
         nodered/node-red:4.1.3
-    ;;;
+    ```
 
 3.  Acesse o painel administrativo em: <http://127.0.0.1:1880/dashboard>.
 
@@ -275,3 +282,98 @@ Como Prova de Conceito (PoC), o sistema atinge seus objetivos, mas apresenta opo
 Este projeto cumpriu integralmente os requisitos da disciplina de IoT, demonstrando a integração prática entre dispositivos de borda, lógica de nuvem e interface de usuário.
 
 O uso do Node-RED como centralizador da lógica provou-se uma escolha arquitetural acertada, permitindo abstrair a complexidade matemática da interpolação e controlar a regra de cobrança, enquanto o Ubidots foi utilizado naquilo que oferece de melhor: visualização de dados e interação com o usuário final. Além da validação técnica, o desenvolvimento proporcionou domínio sobre a orquestração de containers Docker e fluxos MQTT avançados.
+
+## Apêndice: Entrega 3 - Migração da Lógica de Processamento para o ThingSpeak
+
+Como uma evolução da Prova de Conceito original (Entrega 2), a arquitetura do sistema foi refatorada nesta Entrega 3 para transferir a responsabilidade de armazenamento histórico e o processamento matemático do Node-RED para o **ThingSpeak** (plataforma IoT da MathWorks).
+
+Neste novo cenário, o Node-RED atua primariamente como um agregador de dados (*gateway* e roteador), enquanto o motor do MATLAB embutido no ThingSpeak assume a execução da geometria analítica e a persistência dos dados na nuvem.
+
+### Nova Arquitetura e Fluxo de Dados
+
+Para viabilizar a integração sem esbarrar nas restrições do plano gratuito do ThingSpeak (que permite apenas 8 campos de dados por canal e impõe um tempo mínimo de 15 segundos entre cada envio), a arquitetura adotou o empacotamento dos dados de múltiplos nós sensores em um único pacote JSON. O sistema foi estruturado em três canais no ThingSpeak:
+
+1. **Canal *Geosensors*:** Armazena o estado atual de toda a rede de sensores. O Node-RED agrega as leituras individuais dos três ESP32 e envia um único pacote de dados para o *Field 1* deste canal.
+2. **Canal *Request*:** Recebe as solicitações de cálculo vindas do usuário. O Node-RED gera um identificador único (`request_id`) e envia junto com as coordenadas alvo.
+3. **Canal *Response*:** Armazena o resultado do cálculo. O Node-RED assina este canal via MQTT, recebendo a resposta de forma assíncrona assim que o processamento matemático no ThingSpeak é concluído, e então repassa o valor final ao Ubidots.
+
+| ![Novo Diagrama em Blocos com ThingSpeak](Block_diagram_2.png) |
+| :----------------------------------------------------------: |
+|   _Figura 6: Diagrama da arquitetura atualizada integrando o motor do ThingSpeak_    |
+
+### Estrutura dos Dados e Integração
+
+Para contornar o limite de campos e o tempo mínimo entre envios imposto pelo ThingSpeak, o Node-RED agrupa os dados de telemetria recebidos via MQTT em um objeto JSON unificado. 
+
+Abaixo está o exemplo exato do formato do *payload* enviado via HTTP POST para o canal *Geosensors*:
+
+```json
+{
+  "sensors": [
+    {
+      "id": "0",
+      "lat": -22.8162,
+      "lon": -47.0451,
+      "temp": 24.5
+    },
+    {
+      "id": "1",
+      "lat": -22.9027,
+      "lon": -47.0563,
+      "temp": 26.2
+    },
+    {
+      "id": "2",
+      "lat": -22.8517,
+      "lon": -47.1284,
+      "temp": 23.8
+    }
+  ]
+}
+```
+
+#### Tabela Complementar de Comunicação (Node-RED ↔ ThingSpeak)
+
+Complementando o mapeamento de tópicos da Entrega 2, a comunicação com o ecossistema ThingSpeak ocorre utilizando uma topologia mista (HTTP para escrita em lote e MQTT para leitura orientada a eventos):
+
+| Origem | Destino | Protocolo / Endpoint | Descrição |
+| :--- | :--- | :--- | :--- |
+| **Node-RED** | ThingSpeak (Canal *Geosensors*) | HTTP POST `/update` | Envio periódico do *payload* JSON com o estado consolidado da rede de sensores. |
+| **Node-RED** | ThingSpeak (Canal *Request*) | HTTP POST `/update` | Envio de uma nova requisição contendo o `request_id`, latitude e longitude alvo. |
+| **ThingSpeak** | Node-RED (Listener) | MQTT Sub `channels/3272805/subscribe` | Node-RED assina o canal de resposta para ser notificado assim que o cálculo for concluído na nuvem. |
+
+### Implementação da Lógica no ThingSpeak
+
+A inteligência do sistema foi implementada utilizando os aplicativos nativos do ThingSpeak. O fluxo de execução funciona da seguinte maneira:
+
+* **Gatilho (*React App*):** Configurado para monitorar inserções de dados. Sempre que o Node-RED posta uma nova coordenada no canal *Request*, o aplicativo aciona automaticamente o script de análise no MATLAB.
+* **Processamento Matemático (*MATLAB Analysis*):** O script lê o JSON armazenado no canal *Geosensors* e extrai a matriz de dados. Em seguida, calcula a distância euclidiana entre a coordenada solicitada e todos os sensores disponíveis na rede, **selecionando dinamicamente os 3 sensores mais próximos**. Com estes três pontos espaciais, aplica-se o produto vetorial para encontrar a Equação do Plano, estimando a temperatura local. O resultado, atrelado ao `request_id` original, é escrito no canal *Response*.
+* **Visualização de Dados (*MATLAB Visualizations*):** Foram criadas visualizações programadas em MATLAB para auditoria direta no painel do ThingSpeak:
+  * Uma tabela dinâmica de dados no canal *Geosensors* que extrai as informações do JSON e exibe os sensores ativos.
+  * Um mapa de dispersão geográfica no canal *Response* que plota a posição dos sensores, utilizando uma escala de cores baseada em temperatura, juntamente com a localização exata solicitada pelo usuário.
+
+### Análise Crítica: Benefícios e Limitações
+
+A transferência do processamento para o ThingSpeak trouxe vantagens conceituais, mas introduziu novos desafios que impactam o desempenho do sistema em um cenário de tempo real.
+
+**Benefícios:**
+* **Capacidade Matemática e Escalabilidade:** Embora o JavaScript (no Node-RED) seja excelente para manipulação de mensagens, operações matemáticas pesadas com grandes matrizes podem comprometer seu desempenho. Utilizar o motor do MATLAB permite implementar algoritmos de ordenação espacial complexos de forma nativa e altamente otimizada, escalando facilmente caso a rede cresça para dezenas de sensores.
+* **Persistência Independente:** Os dados brutos da rede de sensores e o histórico de cálculos agora possuem uma camada de armazenamento em banco de dados na nuvem, habilitando futuras auditorias sem depender da memória volátil do Node-RED.
+* **Depuração Visual:** Os scripts de mapa e tabela integrados ao painel simplificam a visualização geoespacial para validação de calibração e cobertura da rede de sensores.
+
+**Limitações e Problemas Encontrados:**
+* **Aumento Expressivo da Latência:** Esta foi a principal regressão arquitetural observada nesta entrega. A exigência de um tempo mínimo de 15 segundos entre envios de dados (devido ao plano gratuito), somada ao tempo de disparo do gatilho interno e à execução do script MATLAB na nuvem, adicionou atrasos consideráveis ao ciclo de resposta. O sistema perdeu a reatividade instantânea presente na Entrega 2, tornando a interface no Ubidots visivelmente mais lenta.
+* **Complexidade Sistêmica e Dependência:** A arquitetura passou a depender de mais um serviço em nuvem de terceiros. A complexidade aumentou consideravelmente devido à necessidade de empacotar dados brutos, lidar com requisições assíncronas utilizando identificadores gerados dinamicamente (`request_id`) e gerenciar múltiplas chaves de autenticação de API.
+
+Em suma, a integração validou conceitos importantes de sistemas embarcados voltados para IoT, como a delegação de processamento pesado para a nuvem (*Edge-to-Cloud offloading*). Contudo, a lentidão imposta pelas limitações do serviço gratuito indica que, para garantir um fluxo rápido e contínuo de dados (alto *throughput*), seria necessário realizar o processamento em servidores locais mais potentes ou migrar para uma infraestrutura de nuvem dedicada e sem restrições de tempo de conexão.
+
+***
+
+### 📌 Anexo: Guia para Inserção de Figuras
+
+_Nota ao autor: Gere as imagens descritas abaixo e substitua os links correspondentes no documento._
+
+* **`Block_diagram_2.png` (Para a Figura 6)**: Desenhe um diagrama atualizado. Mostre os ESP32 (Wokwi) enviando MQTT para o Broker, e o Broker para o Node-RED. Do Node-RED, saem duas setas (HTTP POST) para o ThingSpeak (canais *Geosensors* e *Request*). Mostre a engrenagem (MATLAB/React) ligando esses canais ao canal *Response*. Por fim, uma seta volta do canal *Response* (MQTT Subscribe) para o Node-RED, que repassa o dado ao Ubidots.
+* **`Node_red_flow_thingspeak.png`**: Uma captura de tela abrangendo todo o seu novo fluxo no Node-RED (arquivo `flows.json` atualizado). Deve evidenciar o *loop* temporal (Timer), os nós HTTP de envio, e o novo nó MQTT de recepção. *(Sugestão de inserção: Logo após o parágrafo explicativo da Tabela Complementar)*.
+* **`Thingspeak_sensor_table.png`**: Acesse o canal *Geosensors* no ThingSpeak. Capture apenas a tabela gerada pelo script MATLAB (mostrando as colunas de Sensor, Latitude, Longitude e Temperatura). *(Sugestão de inserção: Após a menção da "tabela dinâmica de dados" no tópico de Visualização).*
+* **`Thingspeak_response_map.png`**: Acesse o canal *Response* no ThingSpeak. Capture o mapa gerado pelo script contendo os marcadores de sensores, a localização solicitada (estrela) e a legenda. *(Sugestão de inserção: Após a menção do "mapa de dispersão geográfica" no tópico de Visualização).*

@@ -845,7 +845,7 @@
         "method": "POST",
         "ret": "txt",
         "paytoqs": "ignore",
-        "url": "https://api.thingspeak.com/update.json",
+        "url": "https://api.thingspeak.com/update",
         "tls": "",
         "persist": false,
         "proxy": "",
