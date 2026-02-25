@@ -141,7 +141,7 @@ Foi desenvolvido um *dashboard* administrativo no Node-RED para monitoramento do
 
 | ![Diagrama de fluxo no Node-RED](Node_red_flow.png) |
 | :-------------------------------------------------: |
-|          _Figura 4: Fluxo completo no Node-RED_           |
+|       _Figura 4: Fluxo completo no Node-RED_        |
 
 A lógica foi segmentada em três blocos funcionais:
 
@@ -181,7 +181,11 @@ A comunicação entre os componentes segue a topologia definida na tabela abaixo
 > * Prefixos Ubidots: `/v1.6/devices/temperature-requester`
 
 ### Ferramentas de Documentação
-Este relatório foi elaborado em Markdown no VS Code, utilizando os plugins "Markdown All in One" para formatação e "Markdown PDF" para exportação. Os diagramas foram produzidos via <https://www.drawio.com/>.
+
+Este relatório foi elaborado em Markdown no VS Code, utilizando as seguintes ferramentas:
+* [Markdown All in One](https://marketplace.visualstudio.com/items?itemName=yzhang.markdown-all-in-one): (extensão do VS Code) para formatação geral e geração automática do sumário.
+* [Markdown PDF](https://marketplace.visualstudio.com/items?itemName=yzane.markdown-pdf): (extensão do VS Code) para exportação do documento final.
+* [draw.io](https://www.drawio.com/): (aplicativo/site online) para a produção dos diagramas de blocos.
 
 ---
 
